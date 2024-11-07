@@ -1,8 +1,8 @@
 const UsersModel = require('../models/users');
 
 const loginUser = async (req, res) => {
-    const { email, password_ } = req.body;
-    console.log("Login Attempt with Email:", email, "and Password:", password_); // Log incoming values
+    const { email, password } = req.body;
+    console.log("Login Attempt with Email:", email, "and Password:", password); // Log incoming values
     
     try {
         // Step 1: Check if the email exists
@@ -17,7 +17,7 @@ const loginUser = async (req, res) => {
         }
         
         // Step 2: Verify password if email is valid
-        const [data] = await UsersModel.verifyUser(email, password_);
+        const [data] = await UsersModel.verifyUser(email, password);
         
         if (!data || data.length === 0) {
             // Password is incorrect
