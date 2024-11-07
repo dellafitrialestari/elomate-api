@@ -1,11 +1,11 @@
 const dbPool = require('../config/database');
 
-const verifyUser = async (email, password_) => {
-    const SQLQuery = `SELECT * FROM user WHERE email = ? AND password_ = ?`;
+const verifyUser = async (email, password) => {
+    const SQLQuery = `SELECT * FROM user WHERE email = ? AND password = ?`;
     console.log("SQL Query:", SQLQuery);
-    console.log("Parameters:", [email, password_]); // Log parameters to confirm values
+    console.log("Parameters:", [email, password]); // Log parameters to confirm values
     
-    return dbPool.execute(SQLQuery, [email, password_]);
+    return dbPool.execute(SQLQuery, [email, password]);
 };
 
 
@@ -30,9 +30,9 @@ const getUserByEmail = (emailUser) => {
 };
 
 const createNewUser = (body) => {
-    const SQLQuery = `INSERT INTO user (batch_data_batch_id, role_id, nama_lengkap, nrp, password_, email, posisi, asal_universitas, jurusan, tempat_lahir, tanggal_lahir, domisili, no_hp) 
+    const SQLQuery = `INSERT INTO user (batch_data_batch_id, role_id, nama_lengkap, nrp, password, email, posisi, asal_universitas, jurusan, tempat_lahir, tanggal_lahir, domisili, no_hp) 
                       VALUES ('${body.batch_data_batch_id}', '${body.role_id}', '${body.nama_lengkap}', '${body.nrp}', 
-                      '${body.password_}', '${body.email}', '${body.posisi}', '${body.asal_universitas}', '${body.jurusan}', 
+                      '${body.password}', '${body.email}', '${body.posisi}', '${body.asal_universitas}', '${body.jurusan}', 
                       '${body.tempat_lahir}', '${body.tanggal_lahir}', '${body.domisili}', '${body.no_hp}')`;
 
     return dbPool.execute(SQLQuery);
