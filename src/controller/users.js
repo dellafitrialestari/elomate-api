@@ -2,32 +2,35 @@ const UsersModel = require('../models/users');
 
 const loginUser = async (req, res) => {
     const { email, password } = req.body;
-    console.log("Login Attempt with Email:", email, "and Password:", password); // Log incoming values
-    
+
+    if (!email || !password) {
+        return res.status(400).json({
+            message: 'Email and password are required',
+            data: null,
+        });
+    }
+
+    console.log("Login Attempt with Email:", email, "and Password:", password);
+
     try {
-        // Step 1: Check if the email exists
         const [userCheck] = await UsersModel.getUserByEmail(email);
         
         if (!userCheck || userCheck.length === 0) {
-            // email does not exist
             return res.status(401).json({
                 message: 'Invalid Email',
                 data: null,
             });
         }
-        
-        // Step 2: Verify password if email is valid
+
         const [data] = await UsersModel.verifyUser(email, password);
         
         if (!data || data.length === 0) {
-            // Password is incorrect
             return res.status(401).json({
                 message: 'Invalid Password',
                 data: null,
             });
         }
 
-        // Step 3: Successfully authenticated, return user data
         const user = data[0];
         const role = user.role_id === 1 ? 'admin' : user.role_id === 2 ? 'fasilitator' : 'management trainee';
 
@@ -40,7 +43,7 @@ const loginUser = async (req, res) => {
             },
         });
     } catch (error) {
-        console.error("Error logging in:", error); // Log error details
+        console.error("Error logging in:", error);
         res.status(500).json({
             message: 'Failed to login user',
             serverMessage: error,
