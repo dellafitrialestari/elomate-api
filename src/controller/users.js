@@ -1,213 +1,229 @@
-const UsersModel = require('../models/users');
+const UsersModel = require("../models/users");
+const jwt = require("jsonwebtoken");
+const { secret, expiresIn } = require("../config/jwt");
 
 const loginUser = async (req, res) => {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
 
-    if (!email || !password) {
-        return res.status(400).json({
-            message: 'Email and password are required',
-            data: null,
-        });
+  if (!email || !password) {
+    return res.status(400).json({
+      message: "Email and password are required",
+      data: null,
+    });
+  }
+
+  console.log("Login Attempt with Email:", email, "and Password:", password);
+
+  try {
+    const [userCheck] = await UsersModel.getUserByEmail(email);
+
+    if (!userCheck || userCheck.length === 0) {
+      return res.status(401).json({
+        message: "Invalid Email",
+        data: null,
+      });
     }
 
-    console.log("Login Attempt with Email:", email, "and Password:", password);
+    const [data] = await UsersModel.verifyUser(email, password);
 
-    try {
-        const [userCheck] = await UsersModel.getUserByEmail(email);
-        
-        if (!userCheck || userCheck.length === 0) {
-            return res.status(401).json({
-                message: 'Invalid Email',
-                data: null,
-            });
-        }
-
-        const [data] = await UsersModel.verifyUser(email, password);
-        
-        if (!data || data.length === 0) {
-            return res.status(401).json({
-                message: 'Invalid Password',
-                data: null,
-            });
-        }
-
-        const user = data[0];
-        const role = user.role_id === 1 ? 'admin' : user.role_id === 2 ? 'fasilitator' : 'management trainee';
-
-        res.json({
-            message: 'You successfully logged in',
-            data: {
-                userId: user.user_id,
-                name: user.nama_lengkap,
-                role: role,
-            },
-        });
-    } catch (error) {
-        console.error("Error logging in:", error);
-        res.status(500).json({
-            message: 'Failed to login user',
-            serverMessage: error,
-        });
+    if (!data || data.length === 0) {
+      return res.status(401).json({
+        message: "Invalid Password",
+        data: null,
+      });
     }
+
+    const user = data[0];
+    const role =
+      user.role_id === 1
+        ? "admin"
+        : user.role_id === 2
+        ? "fasilitator"
+        : "management trainee";
+
+    // User valid, buat JWT Token
+    const token = jwt.sign(
+      { userId: user.user_id, name: user.nama_lengkap, role: role },
+      secret,
+      {
+        expiresIn: expiresIn,
+      }
+    );
+
+    res.json({
+      message: "You successfully logged in",
+      data: {
+        token: token,
+        userId: user.user_id,
+        name: user.nama_lengkap,
+        role: role,
+      },
+    });
+  } catch (error) {
+    console.error("Error logging in:", error);
+    res.status(500).json({
+      message: "Failed to login user",
+      serverMessage: error,
+    });
+  }
 };
 
-
 const getAllUsers = async (req, res) => {
-    try {
-        const [data] = await UsersModel.getAllUsers();
-    
-        res.json({
-            message: 'GET all users success',
-            data: data
-        })
-    } catch (error) {
-        res.status(500).json({
-            message: 'Server Error',
-            serverMessage: error,
-        })
-    }
-}
+  try {
+    const [data] = await UsersModel.getAllUsers();
+
+    res.json({
+      message: "GET all users success",
+      data: data,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Server Error",
+      serverMessage: error,
+    });
+  }
+};
 
 const getUserById = async (req, res) => {
-    const { idUser } = req.params;
-    try {
-        const [data] = await UsersModel.getUserById(idUser);
-    
-        if (data.length === 0) {
-            return res.status(404).json({
-                message: 'User not found',
-                data: null,
-            });
-        }
+  const { idUser } = req.params;
+  try {
+    const [data] = await UsersModel.getUserById(idUser);
 
-        res.json({
-            message: 'GET user by ID success',
-            data: data[0]
-        });
-    } catch (error) {
-        res.status(500).json({
-            message: 'Server Error',
-            serverMessage: error,
-        });
+    if (data.length === 0) {
+      return res.status(404).json({
+        message: "User not found",
+        data: null,
+      });
     }
-}
+
+    res.json({
+      message: "GET user by ID success",
+      data: data[0],
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Server Error",
+      serverMessage: error,
+    });
+  }
+};
 
 const getUserByNrp = async (req, res) => {
-    const { nrpUser } = req.params;
-    try {
-        const [data] = await UsersModel.getUserByNrp(nrpUser);
-    
-        if (data.length === 0) {
-            return res.status(404).json({
-                message: 'User not nrp found',
-                data: null,
-            });
-        }
+  const { nrpUser } = req.params;
+  try {
+    const [data] = await UsersModel.getUserByNrp(nrpUser);
 
-        res.json({
-            message: 'GET user by NRP success',
-            data: data[0]
-        });
-    } catch (error) {
-        res.status(500).json({
-            message: 'Server Error',
-            serverMessage: error,
-        });
+    if (data.length === 0) {
+      return res.status(404).json({
+        message: "User not nrp found",
+        data: null,
+      });
     }
-}
+
+    res.json({
+      message: "GET user by NRP success",
+      data: data[0],
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Server Error",
+      serverMessage: error,
+    });
+  }
+};
 
 const getUserByEmail = async (req, res) => {
-    const { emailUser } = req.params;
-    try {
-        const [data] = await UsersModel.getUserByEmail(emailUser);
-    
-        if (data.length === 0) {
-            return res.status(404).json({
-                message: 'User not found',
-                data: null,
-            });
-        }
+  const { emailUser } = req.params;
+  try {
+    const [data] = await UsersModel.getUserByEmail(emailUser);
 
-        res.json({
-            message: 'GET user by email success',
-            data: data[0]
-        });
-    } catch (error) {
-        console.error("Error:", error); // Log error for debugging
-        res.status(500).json({
-            message: 'Server Error',
-            serverMessage: error,
-        });
+    if (data.length === 0) {
+      return res.status(404).json({
+        message: "User not found",
+        data: null,
+      });
     }
+
+    res.json({
+      message: "GET user by email success",
+      data: data[0],
+    });
+  } catch (error) {
+    console.error("Error:", error); // Log error for debugging
+    res.status(500).json({
+      message: "Server Error",
+      serverMessage: error,
+    });
+  }
 };
 
 const createNewUser = async (req, res) => {
-    const {body} = req;
+  const { body } = req;
 
-    if (!body.email || !body.nama_lengkap || !body.domisili) {
-        return res.status(400).json({
-            message: 'Anda mengirimkan data yang salah',
-            data: null,
-        });
-    }
+  if (!body.email || !body.nama_lengkap || !body.domisili) {
+    return res.status(400).json({
+      message: "Anda mengirimkan data yang salah",
+      data: null,
+    });
+  }
 
-    try {
-        await UsersModel.createNewUser(body);
-        res.status(201).json({
-            message: 'CREATE new user success',
-            data: body
-        })
-    } catch (error) {
-        res.status(500).json({
-            message: 'Server Error',
-            serverMessage: error,
-        })
-    }
-}
+  try {
+    await UsersModel.createNewUser(body);
+    res.status(201).json({
+      message: "CREATE new user success",
+      data: body,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Server Error",
+      serverMessage: error,
+    });
+  }
+};
 
 const updateUser = async (req, res) => {
-    const {idUser} = req.params;
-    const {body} = req;
-    try {
-        await UsersModel.updateUser(body, idUser);
-        res.json({
-            message: 'UPDATE user success',
-            data: {
-                id: idUser,
-                ...body
-            },
-        })
-    } catch (error) {
-        res.status(500).json({
-            message: 'Server Error',
-            serverMessage: error,
-        })
-    }
-}
+  const { idUser } = req.params;
+  const { body } = req;
+  try {
+    await UsersModel.updateUser(body, idUser);
+    res.json({
+      message: "UPDATE user success",
+      data: {
+        id: idUser,
+        ...body,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Server Error",
+      serverMessage: error,
+    });
+  }
+};
 
 const deleteUser = async (req, res) => {
-    const {idUser} = req.params;
-    try {
-        await UsersModel.deleteUser(idUser);
-        res.json({
-            message: 'DELETE user success',
-            data: null
-        })
-    } catch (error) {
-        res.status(500).json({
-            message: 'Server Error',
-            serverMessage: error,
-        })
-    }
-}
+  const { idUser } = req.params;
+  try {
+    await UsersModel.deleteUser(idUser);
+    res.json({
+      message: "DELETE user success",
+      data: null,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Server Error",
+      serverMessage: error,
+    });
+  }
+};
 
 module.exports = {
-    loginUser,
-    getAllUsers,
-    getUserById,
-    getUserByNrp,
-    getUserByEmail,
-    createNewUser,
-    updateUser,
-    deleteUser,
-}
+  loginUser,
+  getAllUsers,
+  getUserById,
+  getUserByNrp,
+  getUserByEmail,
+  createNewUser,
+  updateUser,
+  deleteUser,
+};
