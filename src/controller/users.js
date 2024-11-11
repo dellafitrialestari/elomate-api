@@ -35,7 +35,7 @@ const loginUser = async (req, res) => {
       });
     }
 
-    const role = 
+    const role =
       user.role_id === 1 ? "admin" :
       user.role_id === 2 ? "fasilitator" : "management trainee";
 
@@ -69,6 +69,46 @@ const loginUser = async (req, res) => {
   }
 };
 
+const getCurrentUser = async (req, res) => {
+  try {
+    // Ambil token dari header Authorization
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        message: "Authorization token missing or invalid",
+        data: null,
+      });
+    }
+
+    // Pisahkan 'Bearer' dari token
+    const token = authHeader.split(" ")[1];
+
+    // Verifikasi token
+    const decoded = jwt.verify(token, secret); // Pastikan variabel 'secret' ada di file config JWT
+    
+    // Ambil userId dari token yang telah didekode
+    const userId = decoded.userId;
+
+    // Ambil data pengguna dari database
+    const [data] = await UsersModel.getUserById(userId);
+    if (data.length === 0) {
+      return res.status(404).json({
+        message: "User not found",
+        data: null,
+      });
+    }
+
+    // Kembalikan data pengguna
+    return res.status(200).json(data[0]);
+    
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+      serverMessage: error,
+    });
+  }
+};
 
 const getAllUsers = async (req, res) => {
   try {
@@ -229,6 +269,7 @@ const deleteUser = async (req, res) => {
 
 module.exports = {
   loginUser,
+  getCurrentUser,
   getAllUsers,
   getUserById,
   getUserByNrp,

@@ -9,6 +9,9 @@ router.post("/login", UserController.loginUser);
 // CREATE - POST
 router.post("/register", UserController.createNewUser);
 
+// READ - GET by Token
+router.get("/me", UserController.getCurrentUser);
+
 // READ - GET by ID
 router.get("/:idUser", UserController.getUserById);
 
