@@ -1,6 +1,8 @@
 const UsersModel = require("../models/users");
 const jwt = require("jsonwebtoken");
-const { secret, expiresIn } = require("../config/jwt");
+const { secret, expiresIn, refreshExpiresIn } = require("../config/jwt");
+
+const bcrypt = require("bcrypt");
 
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
@@ -12,8 +14,6 @@ const loginUser = async (req, res) => {
     });
   }
 
-  console.log("Login Attempt with Email:", email, "and Password:", password);
-
   try {
     const [userCheck] = await UsersModel.getUserByEmail(email);
 
@@ -24,24 +24,22 @@ const loginUser = async (req, res) => {
       });
     }
 
-    const [data] = await UsersModel.verifyUser(email, password);
+    const user = userCheck[0];
 
-    if (!data || data.length === 0) {
+    // Compare the provided password with the stored hashed password
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) {
       return res.status(401).json({
         message: "Invalid Password",
         data: null,
       });
     }
 
-    const user = data[0];
-    const role =
-      user.role_id === 1
-        ? "admin"
-        : user.role_id === 2
-        ? "fasilitator"
-        : "management trainee";
+    const role = 
+      user.role_id === 1 ? "admin" :
+      user.role_id === 2 ? "fasilitator" : "management trainee";
 
-    // User valid, buat JWT Token
+    // User is valid, create tokens
     const token = jwt.sign(
       { userId: user.user_id, name: user.nama_lengkap, role: role },
       secret,
@@ -50,14 +48,17 @@ const loginUser = async (req, res) => {
       }
     );
 
+    const refreshToken = jwt.sign(
+      { userId: user.user_id, role: role },
+      secret,
+      {
+        expiresIn: refreshExpiresIn,
+      }
+    );
+
     res.json({
-      message: "You successfully logged in",
-      data: {
-        token: token,
-        userId: user.user_id,
-        name: user.nama_lengkap,
-        role: role,
-      },
+      token: token,
+      refreshToken: refreshToken,
     });
   } catch (error) {
     console.error("Error logging in:", error);
@@ -67,6 +68,7 @@ const loginUser = async (req, res) => {
     });
   }
 };
+
 
 const getAllUsers = async (req, res) => {
   try {
@@ -160,18 +162,26 @@ const getUserByEmail = async (req, res) => {
 const createNewUser = async (req, res) => {
   const { body } = req;
 
-  if (!body.email || !body.nama_lengkap || !body.domisili) {
+  if (!body.email || !body.nama_lengkap || !body.domisili || !body.password) {
     return res.status(400).json({
-      message: "Anda mengirimkan data yang salah",
+      message: "Incomplete data: email, full name, domicile, and password are required.",
       data: null,
     });
   }
 
   try {
-    await UsersModel.createNewUser(body);
+    // Hash the password before saving it to the database
+    const hashedPassword = await bcrypt.hash(body.password, 10);
+    const newUser = { ...body, password: hashedPassword };
+
+    await UsersModel.createNewUser(newUser);
     res.status(201).json({
       message: "CREATE new user success",
-      data: body,
+      data: {
+        email: body.email,
+        nama_lengkap: body.nama_lengkap,
+        domisili: body.domisili,
+      },
     });
   } catch (error) {
     res.status(500).json({

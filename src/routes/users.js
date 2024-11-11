@@ -7,7 +7,7 @@ const router = express.Router();
 router.post("/login", UserController.loginUser);
 
 // CREATE - POST
-router.post("/", UserController.createNewUser);
+router.post("/register", UserController.createNewUser);
 
 // READ - GET by ID
 router.get("/:idUser", UserController.getUserById);
