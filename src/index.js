@@ -3,6 +3,7 @@ const PORT = process.env.PORT || 5000;
 const express = require("express");
 
 const usersRoutes = require("./routes/users");
+const coursesRoutes = require("./routes/courses");
 
 const middlewareLogRequest = require("./middleware/logs");
 const authenticateJWT = require("./middleware/auth");
@@ -20,6 +21,9 @@ app.use(express.json());
 // app.use('/assets', express.static('public/images'))
 
 app.use("/auth", usersRoutes);
+
+app.use("/courses", coursesRoutes);
+
 // app.post('/upload',upload.single('photo'),(req, res) => {
 //     res.json({
 //         message: 'Upload berhasil'

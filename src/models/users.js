@@ -15,8 +15,35 @@ const getAllUsers = () => {
 }
 
 const getUserById = (idUser) => {
-    const SQLQuery = `SELECT * FROM user WHERE user_id=${idUser}`;
-    return dbPool.execute(SQLQuery);
+    const SQLQuery = `
+    SELECT 
+        user.user_id,
+        user.nama_lengkap,
+        role.role_name,
+        batch_data.batch_name,
+        user.nrp,
+        user.email,
+        user.posisi,
+        user.asal_universitas,
+        user.jurusan,
+        user.tempat_lahir,
+        user.tanggal_lahir,
+        user.domisili,
+        user.no_hp
+    FROM 
+        user
+    JOIN 
+        role ON user.role_id = role.role_id
+    JOIN 
+        course_enrollment ON user.user_id = course_enrollment.user_user_id
+    JOIN 
+        course ON course_enrollment.course_id = course.course_id
+    JOIN 
+        batch_data ON course.batch_data_batch_id = batch_data.batch_id
+    WHERE 
+        user.user_id = ?;
+    `;
+    return dbPool.execute(SQLQuery, [idUser]);
 }
 
 const getUserByNrp = (nrpUser) => {
