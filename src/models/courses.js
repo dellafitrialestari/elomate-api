@@ -132,21 +132,20 @@ const getTopicByPhase = (phaseCourse) => {
 
 const getTopicByPhaseUserId = (userId, phaseCourse) => {
     const SQLQuery = `
-    SELECT 
-        topik.*
+    SELECT DISTINCT 
+        t.topik_id, t.nama_topik
     FROM 
-        user
+        course_enrollment ce
     JOIN 
-        batch_data ON user.batch_data_batch_id = batch_data.batch_id
+        course c ON ce.course_id = c.course_id
     JOIN 
-        course ON batch_data.batch_id = course.batch_data_batch_id
+        topik t ON c.topik_id = t.topik_id
     JOIN 
-        topik ON course.topik_id = topik.topik_id
-    JOIN    
-        phase ON topik.phase_id = phase.phase_id
+        phase p ON t.phase_id = p.phase_id
     WHERE 
-        user.user_id = ?
-        AND phase.phase_id = ?;
+        ce.user_user_id = ? 
+        AND t.phase_id = ?;
+    
     `;
     return dbPool.execute(SQLQuery, [userId, phaseCourse]);
 }
