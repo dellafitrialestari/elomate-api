@@ -106,7 +106,7 @@ const getPhaseCourses = () => {
 
 const getPhaseCoursesByUserId = (userId) => {
     const SQLQuery = `
-    SELECT 
+    SELECT DISTINCT
         phase.phase_id,
         phase.nama_phase
     FROM 

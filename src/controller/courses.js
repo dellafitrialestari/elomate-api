@@ -134,13 +134,13 @@ const getPhaseCoursesByUserId = async (req, res) => {
           });
       }
 
-      // Remove duplicates based on phase_id
-      const uniqueCourses = courses.filter(
-          (course, index, self) => index === self.findIndex(c => c.phase_id === course.phase_id)
-      );
+      // // Remove duplicates based on phase_id
+      // const uniqueCourses = courses.filter(
+      //     (course, index, self) => index === self.findIndex(c => c.phase_id === course.phase_id)
+      // );
 
       // Return the array directly without wrapping in an object
-      return res.status(200).json(uniqueCourses);
+      return res.status(200).json(courses);
   } catch (error) {
       console.error("Error fetching courses:", error);
       return res.status(500).json({
