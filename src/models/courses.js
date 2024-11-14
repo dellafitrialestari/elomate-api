@@ -107,13 +107,14 @@ const getPhaseCourses = () => {
 const getPhaseCoursesByUserId = (userId) => {
     const SQLQuery = `
     SELECT 
-        phase.phase_id, phase.nama_phase
+        phase.phase_id,
+        phase.nama_phase
     FROM 
         user
     JOIN 
-        batch_data ON user.batch_data_batch_id = batch_data.batch_id
+        course_enrollment ON user.user_id = course_enrollment.user_user_id
     JOIN 
-        course ON batch_data.batch_id = course.batch_data_batch_id
+        course ON course_enrollment.course_id = course.course_id
     JOIN 
         topik ON course.topik_id = topik.topik_id
     JOIN 

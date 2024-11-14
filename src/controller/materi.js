@@ -1,22 +1,63 @@
-const CoursesModel = require("../models/materi");
+const MateriModel = require("../models/materi");
 
 const getMateriByUser = async (req, res) => {
-    try {
-      const [data] = await CoursesModel.getMateriByUser();
-  
-    //   res.json({
-    //     message: "GET all users success",
-    //     data: data,
-    //   });
-      res.json(data);
-    } catch (error) {
-      res.status(500).json({
-        message: "Server Error",
-        serverMessage: error,
+  try {
+      const userId = req.user.userId; // Ensure userId is extracted via middleware authentication
+      
+      // Fetch courses based on user ID
+      const [materi] = await MateriModel.getMateriByUser(userId);
+      
+      if (!materi || materi.length === 0) {
+          return res.status(404).json({
+              message: "No learning materials found for this user",
+              data: null,
+          });
+      }
+
+      // Return all courses related to the user
+      // return res.status(200).json({ courses });
+
+      // Return the array directly without wrapping in an object
+      return res.status(200).json(materi);
+  } catch (error) {
+      console.error("Error fetching courses:", error);
+      return res.status(500).json({
+          message: "Internal server error",
+          serverMessage: error.message,
       });
-    }
+  }
+};
+
+const getMateriByUserCourse = async (req, res) => {
+  const { courseId } = req.params;
+  try {
+      const userId = req.user.userId; // Ensure userId is extracted via middleware authentication
+      
+      // Fetch courses based on user ID
+      const [materi] = await MateriModel.getMateriByUserCourse(userId, courseId);
+      
+      if (!materi || materi.length === 0) {
+          return res.status(404).json({
+              message: "No learning materials found for this user",
+              data: null,
+          });
+      }
+
+      // Return all courses related to the user
+      // return res.status(200).json({ courses });
+
+      // Return the array directly without wrapping in an object
+      return res.status(200).json(materi);
+  } catch (error) {
+      console.error("Error fetching courses:", error);
+      return res.status(500).json({
+          message: "Internal server error",
+          serverMessage: error.message,
+      });
+  }
 };
 
 module.exports = {
     getMateriByUser,
+    getMateriByUserCourse,
   };

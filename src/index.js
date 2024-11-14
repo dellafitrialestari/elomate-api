@@ -4,6 +4,8 @@ const express = require("express");
 
 const usersRoutes = require("./routes/users");
 const coursesRoutes = require("./routes/courses");
+const materiRoutes = require("./routes/materi");
+const assignmentRoutes = require("./routes/assignment");
 
 const middlewareLogRequest = require("./middleware/logs");
 const authenticateJWT = require("./middleware/auth");
@@ -23,6 +25,10 @@ app.use(express.json());
 app.use("/auth", usersRoutes);
 
 app.use("/courses", coursesRoutes);
+
+app.use("/materi", materiRoutes);
+
+app.use("/assignment", assignmentRoutes);
 
 // app.post('/upload',upload.single('photo'),(req, res) => {
 //     res.json({
