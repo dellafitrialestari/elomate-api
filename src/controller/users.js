@@ -98,8 +98,16 @@ const getCurrentUser = async (req, res) => {
       });
     }
 
-    // Kembalikan data pengguna
-    return res.status(200).json(data[0]);
+    // Format tanggal_lahir tanpa mengubah zona waktu
+    const userData = data[0];
+    if (userData.tanggal_lahir) {
+      const tanggalLahir = new Date(userData.tanggal_lahir);
+      const [year, month, day] = tanggalLahir.toISOString().split("T")[0].split("-");
+      userData.tanggal_lahir = `${day}-${month}-${year}`;
+    }
+
+    // Kembalikan data pengguna dengan format tanggal yang diubah
+    return res.status(200).json(userData);
     
   } catch (error) {
     console.error("Error fetching user data:", error);

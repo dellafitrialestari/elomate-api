@@ -120,6 +120,34 @@ const getPhaseCourses = async (req, res) => {
     }
 };
 
+const getPhaseCoursesByUserId = async (req, res) => {
+  try {
+      const userId = req.user.userId; // Ensure userId is extracted via middleware authentication
+      
+      // Fetch courses based on user ID
+      const [courses] = await CoursesModel.getPhaseCoursesByUserId(userId);
+      
+      if (!courses || courses.length === 0) {
+          return res.status(404).json({
+              message: "No phase found for this user",
+              data: null,
+          });
+      }
+
+      // Return all courses related to the user
+      // return res.status(200).json({ courses });
+
+      // Return the array directly without wrapping in an object
+      return res.status(200).json(courses);
+  } catch (error) {
+      console.error("Error fetching courses:", error);
+      return res.status(500).json({
+          message: "Internal server error",
+          serverMessage: error.message,
+      });
+  }
+};
+
 const getTopicByPhase = async (req, res) => {
     const { phaseCourse } = req.params;
     try {
@@ -127,7 +155,7 @@ const getTopicByPhase = async (req, res) => {
 
       if (data.length === 0) {
         return res.status(404).json({
-          message: "User not found",
+          message: "Topic not found",
           data: null,
         });
       }
@@ -142,11 +170,60 @@ const getTopicByPhase = async (req, res) => {
     }
 };
 
+const getTopicByPhaseUserId = async (req, res) => {
+  const { phaseCourse } = req.params;
+  try {
+    const userId = req.user.userId;
+    const [data] = await CoursesModel.getTopicByPhaseUserId(userId, phaseCourse);
+
+    if (data.length === 0) {
+      return res.status(404).json({
+        message: "Topic not found",
+        data: null,
+      });
+    }
+
+    res.json(data);
+
+  } catch (error) {
+    res.status(500).json({
+      message: "Server Error",
+      serverMessage: error,
+    });
+  }
+};
+
+const TopicByPhaseUserId = async (req, res) => {
+  const { phaseCourse } = req.body;
+  try {
+    const userId = req.user.userId;
+    const [data] = await CoursesModel.TopicByPhaseUserId(userId, phaseCourse);
+
+    if (data.length === 0) {
+      return res.status(404).json({
+        message: "Topic not found",
+        data: null,
+      });
+    }
+
+    res.json(data);
+
+  } catch (error) {
+    res.status(500).json({
+      message: "Server Error",
+      serverMessage: error,
+    });
+  }
+};
+
 
 module.exports = {
     getCoursesByUser,
     getCoursesByUserIdAndPhaseAndTopic,
     getCoursesByUserIdAndPhaseNameAndTopicName,
     getPhaseCourses,
+    getPhaseCoursesByUserId,
     getTopicByPhase,
+    getTopicByPhaseUserId,
+    TopicByPhaseUserId,
 };
