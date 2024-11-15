@@ -22,6 +22,9 @@ router.post("/phaseUserContext", CoursesController.TopicByPhaseUserId);
 // GET - courses by Id phase topic
 router.get("/:phase/:topic", CoursesController.getCoursesByUserIdAndPhaseAndTopic);
 
+// GET - courses by Id course
+router.get("/:courseId", CoursesController.getCoursesByUserIdCourseId);
+
 // POST - courses by Id phaseName topicName
 router.post("/name", CoursesController.getCoursesByUserIdAndPhaseNameAndTopicName);
 

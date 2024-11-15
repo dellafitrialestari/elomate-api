@@ -67,6 +67,46 @@ const getCoursesByUserIdAndPhaseAndTopic = async (req, res) => {
   }
 };
 
+const getCoursesByUserIdCourseId = async (req, res) => {
+  
+  const { courseId } = req.params;
+
+  // Check if phase or topic is missing
+  if (!courseId) {
+      return res.status(400).json({
+          message: "Phase and topic are required parameters",
+          data: null,
+      });
+  }
+
+  try {
+      const userId = req.user.userId; // Ensure userId is extracted via middleware authentication
+      
+      // Fetch courses based on user ID
+      const [courses] = await CoursesModel.getCoursesByUserIdCourseId(userId, courseId);
+      
+      if (!courses || courses.length === 0) {
+          return res.status(404).json({
+              message: "No courses found for this user",
+              data: null,
+          });
+      }
+
+      // Return all courses related to the user
+      // return res.status(200).json({ courses });
+
+      // Return the array directly without wrapping in an object
+      return res.status(200).json(courses);
+  } catch (error) {
+      console.error("Error fetching courses:", error);
+      return res.status(500).json({
+          message: "Internal server error",
+          serverMessage: error.message,
+      });
+  }
+};
+
+
 const getCoursesByUserIdAndPhaseNameAndTopicName = async (req, res) => {
   const { phaseName, topicName } = req.body;
 
@@ -223,6 +263,7 @@ module.exports = {
     getCoursesByUser,
     getCoursesByUserIdAndPhaseAndTopic,
     getCoursesByUserIdAndPhaseNameAndTopicName,
+    getCoursesByUserIdCourseId,
     getPhaseCourses,
     getPhaseCoursesByUserId,
     getTopicByPhase,
