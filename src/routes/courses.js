@@ -13,7 +13,7 @@ router.get("/phaseUser", CoursesController.getPhaseCoursesByUserId);
 
 router.get("/phase/:phaseCourse", CoursesController.getTopicByPhase);
 
-// GET - Topic by id user
+// GET - Topic by id user & phase
 router.get("/phaseUser/:phaseCourse", CoursesController.getTopicByPhaseUserId);
 
 // POST GET - Topic by id user
