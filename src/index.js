@@ -27,7 +27,7 @@ app.use("/auth", usersRoutes);
 
 app.use("/courses", coursesRoutes);
 
-app.use("/pre-reading", preReadingRoutes);
+app.use("/preReading", preReadingRoutes);
 
 app.use("/assignment", assignmentRoutes);
 

@@ -104,16 +104,24 @@ const getAssignmentByAssignmentId = (userId, assignmentId) => {
         a.tanggal_mulai,
         a.tanggal_selesai,
         a.category,
-        a.active
+        a.active,
+        COALESCE(sua.score, 0) AS user_score, -- Nilai user
+        COUNT(qa.question_id) AS total_questions -- Jumlah pertanyaan
     FROM 
         assignment a
     JOIN
         course c ON a.course_id = c.course_id
     JOIN 
         course_enrollment ce ON a.course_id = ce.course_id
+    LEFT JOIN 
+        score_user_assignment sua ON a.assignment_id = sua.assignment_id AND sua.user_id = ce.user_user_id
+    LEFT JOIN 
+        question_assignment qa ON a.assignment_id = qa.assignment_id
     WHERE 
         ce.user_user_id = ? 
-        AND a.assignment_id = ?;
+        AND a.assignment_id = ?
+    GROUP BY 
+        a.assignment_id, sua.score;
     `;
     return dbPool.execute(SQLQuery, [userId, assignmentId]);
 }

@@ -227,7 +227,7 @@ const getAssignmentByAssignmentId = async (req, res) => {
         }));
   
         // Return the array directly without wrapping in an object
-        return res.status(200).json(formattedAssignments);
+        return res.status(200).json(formattedAssignments[0]);
     } catch (error) {
         console.error("Error fetching courses:", error);
         return res.status(500).json({

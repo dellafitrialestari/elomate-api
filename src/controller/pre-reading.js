@@ -76,7 +76,7 @@ const getMateriByMateriId = async (req, res) => {
         // return res.status(200).json({ courses });
   
         // Return the array directly without wrapping in an object
-        return res.status(200).json(materi);
+        return res.status(200).json(materi[0]);
     } catch (error) {
         console.error("Error fetching courses:", error);
         return res.status(500).json({

@@ -10,6 +10,6 @@ router.get("/", MateriController.getMateriByUser);
 router.get("/:courseId", MateriController.getMateriByUserCourse);
 
 // GET - materi by materiId
-router.get("/Id/:materiId", MateriController.getMateriByMateriId);
+router.get("/id/:materiId", MateriController.getMateriByMateriId);
 
 module.exports = router;
