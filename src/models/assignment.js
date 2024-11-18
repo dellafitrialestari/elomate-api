@@ -46,13 +46,17 @@ const getAssignmentByUserCoursePreActivity = (userId, courseId) => {
     SELECT 
         a.assignment_id,
         a.course_id,
+        c.nama_course,
         a.title,
+        a.question_type,
         a.tanggal_mulai,
         a.tanggal_selesai,
         a.category,
         a.active
     FROM 
         assignment a
+    JOIN
+        course c ON a.course_id = c.course_id
     JOIN 
         course_enrollment ce ON a.course_id = ce.course_id
     WHERE 
@@ -68,13 +72,17 @@ const getAssignmentByUserCoursePostActivity = (userId, courseId) => {
     SELECT 
         a.assignment_id,
         a.course_id,
+        c.nama_course,
         a.title,
+        a.question_type,
         a.tanggal_mulai,
         a.tanggal_selesai,
         a.category,
         a.active
     FROM 
         assignment a
+    JOIN
+        course c ON a.course_id = c.course_id
     JOIN 
         course_enrollment ce ON a.course_id = ce.course_id
     WHERE 

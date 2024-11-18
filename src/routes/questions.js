@@ -4,9 +4,14 @@ const QuestionsController = require("../controller/questions.js");
 const router = express.Router();
 
 // GET - questions by assignment_id & type (multiple_choice atau essay)
-router.get("/:assignmentId/:type", QuestionsController.getQuestionsByType);
+// router.get("/:assignmentId/:type", QuestionsController.getQuestionsByType);
 
-// router.get("/options/:questionId", QuestionsController.getAnswerByQuestionId);
+router.get("/:questionId", QuestionsController.getAnswerByQuestionsId);
 
+// GET - questions by assignment_id
+router.get("/assignment/:assignmentId", QuestionsController.getQuestionsByAssignmentId);
+
+// POST - insert score based on user's answer
+router.post("/score", QuestionsController.insertScoreAnswer);
 
 module.exports = router;
