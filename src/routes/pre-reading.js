@@ -1,5 +1,5 @@
 const express = require("express");
-const MateriController = require("../controller/materi.js");
+const MateriController = require("../controller/pre-reading.js");
 
 const router = express.Router();
 
@@ -8,5 +8,8 @@ router.get("/", MateriController.getMateriByUser);
 
 // GET - materi by userId dan courseId
 router.get("/:courseId", MateriController.getMateriByUserCourse);
+
+// GET - materi by materiId
+router.get("/Id/:materiId", MateriController.getMateriByMateriId);
 
 module.exports = router;

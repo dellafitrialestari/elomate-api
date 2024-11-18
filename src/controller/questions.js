@@ -22,14 +22,10 @@ const getQuestionsByAssignmentId = async (req, res) => {
         }
 
         const formattedQuestions = questions.map((question) => {
-            let answerStatus = "-";
+            let answerStatus = "-"; // Jawaban manual akan diinputkan kemudian
 
-            if (question.user_answer !== "-") {
-                if (question.question_type === "multiple_choice") {
-                    answerStatus = question.user_answer === question.correct_options ? "benar" : "salah";
-                } else if (question.question_type === "essay") {
-                    answerStatus = question.user_answer === question.correct_answer ? "benar" : "salah";
-                }
+            if (question.user_answer !== "Tidak ada jawaban" && question.question_type === "multiple_choice") {
+                answerStatus = question.user_answer === question.correct_options ? "benar" : "salah";
             }
 
             return {
@@ -38,10 +34,7 @@ const getQuestionsByAssignmentId = async (req, res) => {
                     all_options: question.all_options ? question.all_options.split(",") : [],
                     correct_options: question.correct_options || null,
                 }),
-                ...(question.question_type === "essay" && {
-                    correct_answer: question.correct_answer || null,
-                }),
-                user_answer: question.user_answer || "-",
+                user_answer: question.user_answer || "Tidak ada jawaban",
                 answer_status: answerStatus,
             };
         });

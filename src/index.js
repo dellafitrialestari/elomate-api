@@ -4,7 +4,7 @@ const express = require("express");
 
 const usersRoutes = require("./routes/users");
 const coursesRoutes = require("./routes/courses");
-const materiRoutes = require("./routes/materi");
+const preReadingRoutes = require("./routes/pre-reading");
 const assignmentRoutes = require("./routes/assignment");
 const questionsRoutes = require("./routes/questions");
 
@@ -27,7 +27,7 @@ app.use("/auth", usersRoutes);
 
 app.use("/courses", coursesRoutes);
 
-app.use("/materi", materiRoutes);
+app.use("/pre-reading", preReadingRoutes);
 
 app.use("/assignment", assignmentRoutes);
 

@@ -7,7 +7,7 @@ const getQuestionsByAssignmentId = (assignmentId, userId) => {
         a.question_type,
         GROUP_CONCAT(DISTINCT mco.option_text ORDER BY mco.option_id) AS all_options,
         GROUP_CONCAT(DISTINCT CASE WHEN mco.is_correct = 'benar' THEN mco.option_text END) AS correct_options,
-        eaa.answer_text AS correct_answer,
+
         COALESCE(
             CASE 
                 WHEN a.question_type = 'multiple_choice' THEN 
@@ -33,12 +33,11 @@ const getQuestionsByAssignmentId = (assignmentId, userId) => {
         assignment a ON qa.assignment_id = a.assignment_id
     LEFT JOIN 
         multiple_choice_option_assignment mco ON qa.question_id = mco.question_assignment_question_id
-    LEFT JOIN 
-        essay_answers_assignment eaa ON qa.question_id = eaa.question_assignment_question_id
+
     WHERE 
         qa.assignment_id = ?
     GROUP BY 
-        qa.question_id, a.question_type, eaa.answer_text;
+        qa.question_id, a.question_type;
     `;
     return dbPool.execute(SQLQuery, [userId, userId, assignmentId]);
 };

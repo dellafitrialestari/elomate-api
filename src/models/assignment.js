@@ -93,9 +93,35 @@ const getAssignmentByUserCoursePostActivity = (userId, courseId) => {
     return dbPool.execute(SQLQuery, [userId, courseId]);
 }
 
+const getAssignmentByAssignmentId = (userId, assignmentId) => {
+    const SQLQuery = `
+    SELECT 
+        a.assignment_id,
+        a.course_id,
+        c.nama_course,
+        a.title,
+        a.question_type,
+        a.tanggal_mulai,
+        a.tanggal_selesai,
+        a.category,
+        a.active
+    FROM 
+        assignment a
+    JOIN
+        course c ON a.course_id = c.course_id
+    JOIN 
+        course_enrollment ce ON a.course_id = ce.course_id
+    WHERE 
+        ce.user_user_id = ? 
+        AND a.assignment_id = ?;
+    `;
+    return dbPool.execute(SQLQuery, [userId, assignmentId]);
+}
+
 module.exports = {
     getAssignmentByUser,
     getAssignmentByUserCourse,
     getAssignmentByUserCoursePreActivity,
     getAssignmentByUserCoursePostActivity,
+    getAssignmentByAssignmentId,
 }
