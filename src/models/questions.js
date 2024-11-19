@@ -69,8 +69,45 @@ const getAnswerByQuestionsId = (userId, questionId) => {
     return dbPool.execute(SQLQuery, [userId, questionId]);
 };
 
+const getMultipleChoiceQuestions = (assignmentId, userId) => {
+    const SQLQuery = `
+    SELECT 
+        qa.question_id,
+        qa.question_text,
+        GROUP_CONCAT(DISTINCT CASE WHEN mco.is_correct = 'benar' THEN mco.option_text END) AS correct_options,
+        COALESCE(
+            (SELECT mco.option_text 
+             FROM user_has_answers_assignment uha
+             JOIN multiple_choice_option_assignment mco 
+             ON uha.answer_option_id = mco.option_id
+             WHERE uha.user_user_id = ? 
+             AND uha.question_id = qa.question_id
+             LIMIT 1),
+            'Tidak ada jawaban'
+        ) AS user_answer
+    FROM 
+        question_assignment qa
+    JOIN 
+        assignment a ON qa.assignment_id = a.assignment_id
+    LEFT JOIN 
+        multiple_choice_option_assignment mco ON qa.question_id = mco.question_assignment_question_id
+    WHERE 
+        qa.assignment_id = ?
+        AND a.question_type = 'multiple_choice'
+    GROUP BY 
+        qa.question_id;
+    `;
+    return dbPool.execute(SQLQuery, [userId, assignmentId]);
+};
 
-
+const insertTotalScore = (userId, assignmentId, totalScore) => {
+    const SQLQuery = `
+    INSERT INTO score_user_assignment (user_id, assignment_id, score) 
+    VALUES (?, ?, ?)
+    ON DUPLICATE KEY UPDATE score = VALUES(score);
+    `;
+    return dbPool.execute(SQLQuery, [userId, assignmentId, totalScore]);
+};
 
 // const getQuestionsByType = (assignmentId, type) => {
 //     const SQLQuery = `
@@ -136,6 +173,8 @@ module.exports = {
     // getAnswerByQuestionId,
     getQuestionsByAssignmentId,
     getAnswerByQuestionsId,
+    getMultipleChoiceQuestions,
+    insertTotalScore,
     getCorrectAnswer,
     insertScore,
 }

@@ -9,6 +9,9 @@ router.get("/", AssignmentController.getAssignmentByUser);
 // GET - course by userId dan CourseId
 router.get("/:courseId", AssignmentController.getAssignmentByUserCourse);
 
+// GET - ToDo List
+router.get("/user/todo", AssignmentController.getTodoUser);
+
 // GET - assignment by assignmentId
 router.get("/id/:assignmentId", AssignmentController.getAssignmentByAssignmentId);
 

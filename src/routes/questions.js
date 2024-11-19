@@ -14,4 +14,6 @@ router.get("/assignment/:assignmentId", QuestionsController.getQuestionsByAssign
 // POST - insert score based on user's answer
 router.post("/score", QuestionsController.insertScoreAnswer);
 
+// router.post("/scores/:assignmentId", QuestionsController.insertScoreForMultipleChoice);
+
 module.exports = router;

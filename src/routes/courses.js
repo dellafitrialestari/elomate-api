@@ -6,6 +6,9 @@ const router = express.Router();
 // Route untuk mendapatkan courses berdasarkan user yang login
 router.get("/", CoursesController.getCoursesByUser);
 
+// Route untuk mendapatkan courses dengan progress terkecil
+router.get("/courseProgress", CoursesController.getCoursesProgressByUser);
+
 router.get("/phase", CoursesController.getPhaseCourses);
 
 // GET - phase by id user

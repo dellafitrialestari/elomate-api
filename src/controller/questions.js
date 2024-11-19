@@ -188,9 +188,64 @@ const insertScoreAnswer = async (req, res) => {
     }
 };
 
+const insertScoreForMultipleChoice = async (req, res) => {
+    const { assignmentId } = req.body;
+    const userId = req.user.userId; // Pastikan userId diambil dari middleware autentikasi
+
+    if (!assignmentId) {
+        return res.status(400).json({
+            message: "assignmentId is required",
+            data: null,
+        });
+    }
+
+    try {
+        // Ambil semua soal pilihan ganda untuk assignment
+        const [questions] = await QuestionsModel.getMultipleChoiceQuestions(assignmentId, userId);
+
+        if (!questions || questions.length === 0) {
+            return res.status(404).json({
+                message: "No multiple-choice questions found for this assignment",
+                data: null,
+            });
+        }
+
+        // Hitung skor untuk setiap soal
+        let correctAnswers = 0;
+        for (const question of questions) {
+            const isCorrect = question.user_answer === question.correct_options;
+            correctAnswers += isCorrect ? 1 : 0;
+
+            // Simpan skor per soal ke database
+            const score = isCorrect ? 1 : 0;
+            await QuestionsModel.insertScore(question.question_id, score);
+        }
+
+        // Hitung total score (skor maksimal 100 jika semua benar)
+        const totalQuestions = questions.length;
+        const totalScore = (correctAnswers / totalQuestions) * 100;
+
+        // Simpan total score ke database
+        await QuestionsModel.insertTotalScore(userId, assignmentId, totalScore);
+
+        return res.status(200).json({
+            message: "Score calculated and inserted successfully",
+            data: { correctAnswers, totalScore },
+        });
+    } catch (error) {
+        console.error("Error inserting score:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            serverMessage: error.message,
+        });
+    }
+};
+
+
 module.exports = {
     // getQuestionsByType,
     getAnswerByQuestionsId,
     getQuestionsByAssignmentId,
     insertScoreAnswer,
+    insertScoreForMultipleChoice,
 };
