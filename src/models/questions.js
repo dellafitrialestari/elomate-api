@@ -69,7 +69,18 @@ const getAnswerByQuestionsId = (userId, questionId) => {
     return dbPool.execute(SQLQuery, [userId, questionId]);
 };
 
-const getMultipleChoiceQuestions = (assignmentId, userId) => {
+const getAssignmentType = (assignmentId) => {
+    const SQLQuery = `
+    SELECT question_type 
+    FROM assignment 
+    WHERE assignment_id = ? 
+    LIMIT 1;
+    `;
+    return dbPool.execute(SQLQuery, [assignmentId]);
+};
+
+const getMultipleChoiceQuestions = (userId, assignmentId) => {
+    console.log("Executing Query with Parameters:", { userId, assignmentId });
     const SQLQuery = `
     SELECT 
         qa.question_id,
@@ -108,6 +119,7 @@ const insertTotalScore = (userId, assignmentId, totalScore) => {
     `;
     return dbPool.execute(SQLQuery, [userId, assignmentId, totalScore]);
 };
+
 
 // const getQuestionsByType = (assignmentId, type) => {
 //     const SQLQuery = `
@@ -173,6 +185,7 @@ module.exports = {
     // getAnswerByQuestionId,
     getQuestionsByAssignmentId,
     getAnswerByQuestionsId,
+    getAssignmentType,
     getMultipleChoiceQuestions,
     insertTotalScore,
     getCorrectAnswer,

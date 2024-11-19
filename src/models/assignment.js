@@ -9,7 +9,7 @@ const getAssignmentByUser = (userId) => {
         a.tanggal_mulai,
         a.tanggal_selesai,
         a.category,
-        COALESCE(sua.active_status, 'Incomplete') AS active
+        COALESCE(MAX(sua.active_status), 'Incomplete') AS active
     FROM 
         assignment a
     JOIN 
@@ -17,34 +17,39 @@ const getAssignmentByUser = (userId) => {
     LEFT JOIN 
         score_user_assignment sua ON a.assignment_id = sua.assignment_id AND ce.user_user_id = sua.user_id
     WHERE 
-        ce.user_user_id = ?;
+        ce.user_user_id = ?
+    GROUP BY 
+        a.assignment_id, a.course_id, a.title, a.tanggal_mulai, a.tanggal_selesai, a.category;
     `;
     return dbPool.execute(SQLQuery, [userId]);
 }
 
 const getTodoUser = (userId) => {
     const SQLQuery = `
-    SELECT 
+    SELECT  
         a.assignment_id,
         a.course_id,
-        c.nama_course AS course_name,
-        a.title AS title_assignment,
+        c.nama_course,
+        a.title,
+        a.question_type,
         a.tanggal_mulai,
         a.tanggal_selesai,
         a.category,
-        COALESCE(sua.active_status, 'Incomplete') AS active_status
+        COALESCE(MAX(sua.active_status), 'Incomplete') AS active
     FROM 
         assignment a
+    JOIN
+        course c ON a.course_id = c.course_id
     JOIN 
         course_enrollment ce ON a.course_id = ce.course_id
-    JOIN 
-        course c ON a.course_id = c.course_id
     LEFT JOIN 
-        score_user_assignment sua 
-        ON a.assignment_id = sua.assignment_id AND sua.user_id = ce.user_user_id
+        score_user_assignment sua ON a.assignment_id = sua.assignment_id AND sua.user_id = ce.user_user_id
     WHERE 
         ce.user_user_id = ?
-        AND COALESCE(sua.active_status, 'Incomplete') = 'Incomplete';
+        AND COALESCE(sua.active_status, 'Incomplete') = 'Incomplete'
+
+    GROUP BY 
+        a.assignment_id, a.course_id, c.nama_course, a.title, a.question_type, a.tanggal_mulai, a.tanggal_selesai, a.category;
     `;
     return dbPool.execute(SQLQuery, [userId]);
 }
@@ -58,7 +63,7 @@ const getAssignmentByUserCourse = (userId, courseId) => {
         a.tanggal_mulai,
         a.tanggal_selesai,
         a.category,
-        COALESCE(sua.active_status, 'Incomplete') AS active
+        COALESCE(MAX(sua.active_status), 'Incomplete') AS active
     FROM 
         assignment a
     JOIN 
@@ -67,7 +72,9 @@ const getAssignmentByUserCourse = (userId, courseId) => {
         score_user_assignment sua ON a.assignment_id = sua.assignment_id AND ce.user_user_id = sua.user_id
     WHERE 
         ce.user_user_id = ? 
-        AND a.course_id = ?;
+        AND a.course_id = ?
+    GROUP BY 
+        a.assignment_id, a.course_id, a.title, a.tanggal_mulai, a.tanggal_selesai, a.category;
     `;
     return dbPool.execute(SQLQuery, [userId, courseId]);
 }
@@ -83,7 +90,7 @@ const getAssignmentByUserCoursePreActivity = (userId, courseId) => {
         a.tanggal_mulai,
         a.tanggal_selesai,
         a.category,
-        COALESCE(sua.active_status, 'Incomplete') AS active
+        COALESCE(MAX(sua.active_status), 'Incomplete') AS active
     FROM 
         assignment a
     JOIN
@@ -95,7 +102,9 @@ const getAssignmentByUserCoursePreActivity = (userId, courseId) => {
     WHERE 
         ce.user_user_id = ? 
         AND a.course_id = ?
-        AND a.category = "pre_activity";
+        AND a.category = "pre_activity"
+    GROUP BY 
+        a.assignment_id, a.course_id, c.nama_course, a.title, a.question_type, a.tanggal_mulai, a.tanggal_selesai, a.category;
     `;
     return dbPool.execute(SQLQuery, [userId, courseId]);
 }
@@ -111,7 +120,7 @@ const getAssignmentByUserCoursePostActivity = (userId, courseId) => {
         a.tanggal_mulai,
         a.tanggal_selesai,
         a.category,
-        COALESCE(sua.active_status, 'Incomplete') AS active
+        COALESCE(MAX(sua.active_status), 'Incomplete') AS active
     FROM 
         assignment a
     JOIN
@@ -123,7 +132,9 @@ const getAssignmentByUserCoursePostActivity = (userId, courseId) => {
     WHERE 
         ce.user_user_id = ? 
         AND a.course_id = ?
-        AND a.category = "post_activity";
+        AND a.category = "post_activity"
+    GROUP BY 
+        a.assignment_id, a.course_id, c.nama_course, a.title, a.question_type, a.tanggal_mulai, a.tanggal_selesai, a.category;
     `;
     return dbPool.execute(SQLQuery, [userId, courseId]);
 }

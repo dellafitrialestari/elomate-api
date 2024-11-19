@@ -189,7 +189,7 @@ const insertScoreAnswer = async (req, res) => {
 };
 
 const insertScoreForMultipleChoice = async (req, res) => {
-    const { assignmentId } = req.body;
+    const { assignmentId } = req.params;
     const userId = req.user.userId; // Pastikan userId diambil dari middleware autentikasi
 
     if (!assignmentId) {
@@ -200,9 +200,27 @@ const insertScoreForMultipleChoice = async (req, res) => {
     }
 
     try {
-        // Ambil semua soal pilihan ganda untuk assignment
-        const [questions] = await QuestionsModel.getMultipleChoiceQuestions(assignmentId, userId);
+        // Periksa tipe soal assignment
+        const [assignmentTypeResult] = await QuestionsModel.getAssignmentType(assignmentId);
 
+        if (!assignmentTypeResult || assignmentTypeResult.length === 0) {
+            return res.status(404).json({
+                message: "Assignment not found",
+                data: null,
+            });
+        }
+
+        const { question_type } = assignmentTypeResult[0];
+
+        if (question_type !== "multiple_choice") {
+            return res.status(400).json({
+                message: "Assignment essay type",
+                data: null,
+            });
+        }
+
+        // Ambil semua soal pilihan ganda untuk assignment
+        const [questions] = await QuestionsModel.getMultipleChoiceQuestions(userId, assignmentId);
         if (!questions || questions.length === 0) {
             return res.status(404).json({
                 message: "No multiple-choice questions found for this assignment",
@@ -210,36 +228,33 @@ const insertScoreForMultipleChoice = async (req, res) => {
             });
         }
 
-        // Hitung skor untuk setiap soal
+        // Hitung skor total berdasarkan jawaban user
         let correctAnswers = 0;
         for (const question of questions) {
             const isCorrect = question.user_answer === question.correct_options;
             correctAnswers += isCorrect ? 1 : 0;
-
-            // Simpan skor per soal ke database
-            const score = isCorrect ? 1 : 0;
-            await QuestionsModel.insertScore(question.question_id, score);
         }
 
         // Hitung total score (skor maksimal 100 jika semua benar)
         const totalQuestions = questions.length;
         const totalScore = (correctAnswers / totalQuestions) * 100;
 
-        // Simpan total score ke database
+        // Simpan atau perbarui total score ke database
         await QuestionsModel.insertTotalScore(userId, assignmentId, totalScore);
 
         return res.status(200).json({
-            message: "Score calculated and inserted successfully",
+            message: "Score calculated successfully",
             data: { correctAnswers, totalScore },
         });
     } catch (error) {
-        console.error("Error inserting score:", error);
+        console.error("Error calculating score:", error);
         return res.status(500).json({
             message: "Internal server error",
             serverMessage: error.message,
         });
     }
 };
+
 
 
 module.exports = {

@@ -212,25 +212,24 @@ const getAssignmentByUserCoursePostActivity = async (req, res) => {
     const { courseId } = req.params;
 
     try {
-        const userId = req.user.userId; // Ensure userId is extracted via middleware authentication
+        const userId = req.user.userId; // Pastikan userId diambil melalui middleware
 
-        // Fetch courses based on user ID
-        const [assignment] = await AssignmentModel.getAssignmentByUserCoursePostActivity(userId, courseId);
+        // Ambil data assignment dari model
+        const [assignments] = await AssignmentModel.getAssignmentByUserCoursePostActivity(userId, courseId);
 
-        if (!assignment || assignment.length === 0) {
+        if (!assignments || assignments.length === 0) {
             return res.status(404).json({
                 message: "No activity found for this user",
                 data: null,
             });
         }
 
-        // Format tanggal untuk setiap tugas tanpa mengubah zona waktu
+        // Fungsi untuk format tanggal
         const formatTanggal = (tanggal) => {
             if (tanggal) {
                 const tanggalObj = new Date(tanggal);
                 const [year, month, day] = tanggalObj.toISOString().split("T")[0].split("-");
-                
-                // Nama bulan dalam bahasa Indonesia
+
                 const namaBulan = [
                     "Januari", "Februari", "Maret", "April", "Mei", "Juni",
                     "Juli", "Agustus", "September", "Oktober", "November", "Desember"
@@ -241,21 +240,37 @@ const getAssignmentByUserCoursePostActivity = async (req, res) => {
             return tanggal;
         };
 
-        // Proses setiap assignment untuk format tanggal_mulai, tanggal_selesai, dan kategori
-        const formattedAssignments = assignment.map((assignment) => ({
-            ...assignment,
-            tanggal_mulai: formatTanggal(assignment.tanggal_mulai),
-            tanggal_selesai: formatTanggal(assignment.tanggal_selesai),
-            question_type:
-                assignment.question_type === "multiple_choice"
-                    ? "Pilihan ganda"
-                    : assignment.question_type === "essay"
-                    ? "Essay"
-                    : assignment.question_type, // Default jika kategori tidak sesuai
-        }));
+        // Format assignments dan hitung progress
+        let totalAssignments = assignments.length;
+        let completedAssignments = 0;
 
-        // Return the array directly without wrapping in an object
-        return res.status(200).json(formattedAssignments);
+        const formattedAssignments = assignments.map((assignment) => {
+            if (assignment.active === "Complete") {
+                completedAssignments += 1;
+            }
+
+            return {
+                ...assignment,
+                tanggal_mulai: formatTanggal(assignment.tanggal_mulai),
+                tanggal_selesai: formatTanggal(assignment.tanggal_selesai),
+                question_type:
+                    assignment.question_type === "multiple_choice"
+                        ? "Pilihan ganda"
+                        : assignment.question_type === "essay"
+                        ? "Essay"
+                        : assignment.question_type, // Default jika tipe soal tidak sesuai
+            };
+        });
+
+        // Hitung progress sebagai integer (tanpa desimal)
+        const progress = Math.round((completedAssignments / totalAssignments) * 100);
+
+        // Respon JSON dengan format yang diinginkan
+        return res.status(200).json({
+            course_id: courseId,
+            progress: `${progress}%`,
+            list_activity: formattedAssignments,
+        });
     } catch (error) {
         console.error("Error fetching courses:", error);
         return res.status(500).json({

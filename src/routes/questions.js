@@ -12,8 +12,9 @@ router.get("/:questionId", QuestionsController.getAnswerByQuestionsId);
 router.get("/assignment/:assignmentId", QuestionsController.getQuestionsByAssignmentId);
 
 // POST - insert score based on user's answer
-router.post("/score", QuestionsController.insertScoreAnswer);
+// router.post("/score", QuestionsController.insertScoreAnswer);
 
-// router.post("/scores/:assignmentId", QuestionsController.insertScoreForMultipleChoice);
+// POST - insert score based on user's answer for multiple-choice questions
+router.post("/scores/:assignmentId", QuestionsController.insertScoreForMultipleChoice);
 
 module.exports = router;
