@@ -49,41 +49,6 @@ const getQuestionsByAssignmentId = async (req, res) => {
     }
 };
 
-
-// const getQuestionsByType = async (req, res) => {
-//     const { assignmentId, type } = req.params;
-  
-//     // Check if phase or topic is missing in request body
-//     if (!assignmentId || !type) {
-//         return res.status(400).json({
-//             message: "Required in the request body",
-//             data: null,
-//         });
-//     }
-  
-//     try {
-//         // const userId = req.user.userId; // Ensure userId is extracted via middleware authentication
-
-//         const [questions] = await QuestionsModel.getQuestionsByType(assignmentId, type);
-        
-//         if (!questions || questions.length === 0) {
-//             return res.status(404).json({
-//                 message: "No question found for this user",
-//                 data: null,
-//             });
-//         }
-  
-//         // Return the array of courses directly without wrapping in an object
-//         return res.status(200).json(questions);
-//     } catch (error) {
-//         console.error("Error fetching courses:", error);
-//         return res.status(500).json({
-//             message: "Internal server error",
-//             serverMessage: error.message,
-//         });
-//     }
-// };
-
 const getAnswerByQuestionsId = async (req, res) => {
     const { questionId } = req.params;
     const userId = req.user.userId; 
@@ -119,75 +84,6 @@ const getAnswerByQuestionsId = async (req, res) => {
     }
 };
 
-///////////
-
-// const getQuestionsByAssignmentId = async (req, res) => {
-//     const { assignmentId } = req.params;
-
-//     if (!assignmentId) {
-//         return res.status(400).json({
-//             message: "assignmentId is required in the request params",
-//             data: null,
-//         });
-//     }
-
-//     try {
-//         const [questions] = await QuestionsModel.getQuestionsByAssignmentId(assignmentId);
-
-//         if (!questions || questions.length === 0) {
-//             return res.status(404).json({
-//                 message: "No questions found for this assignment",
-//                 data: null,
-//             });
-//         }
-
-//         return res.status(200).json(questions);
-//     } catch (error) {
-//         console.error("Error fetching questions:", error);
-//         return res.status(500).json({
-//             message: "Internal server error",
-//             serverMessage: error.message,
-//         });
-//     }
-// };
-
-const insertScoreAnswer = async (req, res) => {
-    const { questionId, userAnswer } = req.body;
-
-    if (!questionId || !userAnswer) {
-        return res.status(400).json({
-            message: "questionId and userAnswer are required",
-            data: null,
-        });
-    }
-
-    try {
-        const [correctAnswer] = await QuestionsModel.getCorrectAnswer(questionId);
-
-        if (!correctAnswer) {
-            return res.status(404).json({
-                message: "Correct answer not found",
-                data: null,
-            });
-        }
-
-        const score = correctAnswer.answer === userAnswer ? 1 : 0;
-
-        await QuestionsModel.insertScore(questionId, score);
-
-        return res.status(200).json({
-            message: "Score inserted successfully",
-            data: { score },
-        });
-    } catch (error) {
-        console.error("Error inserting score:", error);
-        return res.status(500).json({
-            message: "Internal server error",
-            serverMessage: error.message,
-        });
-    }
-};
-
 const insertScoreForMultipleChoice = async (req, res) => {
     const { assignmentId } = req.params;
     const userId = req.user.userId; // Pastikan userId diambil dari middleware autentikasi
@@ -200,6 +96,18 @@ const insertScoreForMultipleChoice = async (req, res) => {
     }
 
     try {
+        // Dapatkan detail user, course, dan assignment
+        const [userAndAssignmentDetails] = await QuestionsModel.getUserAndAssignmentDetails(userId, assignmentId);
+
+        if (!userAndAssignmentDetails || userAndAssignmentDetails.length === 0) {
+            return res.status(404).json({
+                message: "User or assignment details not found",
+                data: null,
+            });
+        }
+
+        const { user_name, course_name, course_id, assignment_name } = userAndAssignmentDetails[0];
+
         // Periksa tipe soal assignment
         const [assignmentTypeResult] = await QuestionsModel.getAssignmentType(assignmentId);
 
@@ -214,37 +122,58 @@ const insertScoreForMultipleChoice = async (req, res) => {
 
         if (question_type !== "multiple_choice") {
             return res.status(400).json({
-                message: "Assignment essay type",
+                message: "Assignment is not of type multiple_choice",
                 data: null,
             });
         }
 
-        // Ambil semua soal pilihan ganda untuk assignment
-        const [questions] = await QuestionsModel.getMultipleChoiceQuestions(userId, assignmentId);
+        // Ambil pertanyaan dan jawaban pengguna
+        const [questions] = await QuestionsModel.getQuestionsByAssignmentId(assignmentId, userId);
+
         if (!questions || questions.length === 0) {
             return res.status(404).json({
-                message: "No multiple-choice questions found for this assignment",
+                message: "No questions found for this assignment",
                 data: null,
             });
         }
 
-        // Hitung skor total berdasarkan jawaban user
+        // Hitung total skor berdasarkan jawaban benar
+        const totalQuestions = questions.length;
+        const scorePerQuestion = 100 / totalQuestions; // Skor setiap soal agar total menjadi 100
+        let totalScore = 0;
         let correctAnswers = 0;
-        for (const question of questions) {
-            const isCorrect = question.user_answer === question.correct_options;
-            correctAnswers += isCorrect ? 1 : 0;
+
+        questions.forEach((question) => {
+            if (
+                question.user_answer &&
+                question.correct_options &&
+                question.user_answer === question.correct_options
+            ) {
+                correctAnswers += 1; // Hitung jawaban benar
+                totalScore += scorePerQuestion; // Tambahkan skor proporsional
+            }
+        });
+
+        // Cek apakah skor sudah ada di database
+        const [existingScore] = await QuestionsModel.getScore(userId, assignmentId);
+
+        if (existingScore.length > 0) {
+            // Jika skor ada, update nilai skor
+            await QuestionsModel.updateTotalScore(userId, assignmentId, totalScore);
+        } else {
+            // Jika skor tidak ada, insert skor baru
+            await QuestionsModel.insertTotalScore(userId, assignmentId, totalScore);
         }
 
-        // Hitung total score (skor maksimal 100 jika semua benar)
-        const totalQuestions = questions.length;
-        const totalScore = (correctAnswers / totalQuestions) * 100;
-
-        // Simpan atau perbarui total score ke database
-        await QuestionsModel.insertTotalScore(userId, assignmentId, totalScore);
-
         return res.status(200).json({
-            message: "Score calculated successfully",
-            data: { correctAnswers, totalScore },
+            userId,
+            userName: user_name,
+            courseName: course_name,
+            courseId: course_id,
+            assignmentId,
+            assignmentName: assignment_name,
+            totalCorrectAnswers: correctAnswers,
+            totalScore: Math.round(totalScore).toString(),
         });
     } catch (error) {
         console.error("Error calculating score:", error);
@@ -258,9 +187,7 @@ const insertScoreForMultipleChoice = async (req, res) => {
 
 
 module.exports = {
-    // getQuestionsByType,
     getAnswerByQuestionsId,
     getQuestionsByAssignmentId,
-    insertScoreAnswer,
     insertScoreForMultipleChoice,
 };

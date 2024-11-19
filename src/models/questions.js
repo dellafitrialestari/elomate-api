@@ -79,115 +79,77 @@ const getAssignmentType = (assignmentId) => {
     return dbPool.execute(SQLQuery, [assignmentId]);
 };
 
-const getMultipleChoiceQuestions = (userId, assignmentId) => {
-    console.log("Executing Query with Parameters:", { userId, assignmentId });
+const getScore = (userId, assignmentId) => {
     const SQLQuery = `
-    SELECT 
-        qa.question_id,
-        qa.question_text,
-        GROUP_CONCAT(DISTINCT CASE WHEN mco.is_correct = 'benar' THEN mco.option_text END) AS correct_options,
-        COALESCE(
-            (SELECT mco.option_text 
-             FROM user_has_answers_assignment uha
-             JOIN multiple_choice_option_assignment mco 
-             ON uha.answer_option_id = mco.option_id
-             WHERE uha.user_user_id = ? 
-             AND uha.question_id = qa.question_id
-             LIMIT 1),
-            'Tidak ada jawaban'
-        ) AS user_answer
-    FROM 
-        question_assignment qa
-    JOIN 
-        assignment a ON qa.assignment_id = a.assignment_id
-    LEFT JOIN 
-        multiple_choice_option_assignment mco ON qa.question_id = mco.question_assignment_question_id
-    WHERE 
-        qa.assignment_id = ?
-        AND a.question_type = 'multiple_choice'
-    GROUP BY 
-        qa.question_id;
+    SELECT score 
+    FROM score_user_assignment 
+    WHERE user_id = ? AND assignment_id = ?;
     `;
     return dbPool.execute(SQLQuery, [userId, assignmentId]);
+};
+
+const updateTotalScore = (userId, assignmentId, totalScore) => {
+    const SQLQuery = `
+    UPDATE score_user_assignment 
+    SET score = ? 
+    WHERE user_id = ? AND assignment_id = ?;
+    `;
+    return dbPool.execute(SQLQuery, [totalScore, userId, assignmentId]);
 };
 
 const insertTotalScore = (userId, assignmentId, totalScore) => {
     const SQLQuery = `
     INSERT INTO score_user_assignment (user_id, assignment_id, score) 
-    VALUES (?, ?, ?)
-    ON DUPLICATE KEY UPDATE score = VALUES(score);
+    VALUES (?, ?, ?);
     `;
     return dbPool.execute(SQLQuery, [userId, assignmentId, totalScore]);
 };
 
-
-// const getQuestionsByType = (assignmentId, type) => {
-//     const SQLQuery = `
-//     SELECT * 
-//     FROM 
-//         question_assignment 
-//     WHERE 
-//         assignment_id = ? 
-//         AND question_type = ?
-//     `;
-//     return dbPool.execute(SQLQuery, [assignmentId, type]);
-// }
-
-// const getAnswerByQuestionId = (questionId) => {
-//     const SQLQuery = `
-//     SELECT * 
-//     FROM 
-//         multiple_choice_option_assignment 
-//     WHERE 
-//         question_assignment_question_id = ?
-//     `;
-//     return dbPool.execute(SQLQuery, [questionId]);
-// }
-
-//////////////
-
-// const getQuestionsByAssignmentId = (assignmentId) => {
-//     const SQLQuery = `
-//     SELECT 
-//         qa.question_text,
-//         GROUP_CONCAT(DISTINCT mco.option_text ORDER BY mco.option_id) AS all_options,
-//         GROUP_CONCAT(DISTINCT CASE WHEN mco.is_correct = 'benar' THEN mco.option_text END) AS correct_options
-//     FROM 
-//         question_assignment qa
-//     LEFT JOIN 
-//         multiple_choice_option_assignment mco ON qa.question_id = mco.question_assignment_question_id
-//     WHERE 
-//         qa.assignment_id = ?
-//     GROUP BY 
-//         qa.question_text;
-//     `;
-//     return dbPool.execute(SQLQuery, [assignmentId]);
-// };
-
-const getCorrectAnswer = (questionId) => {
+const getCorrectOption = (questionId) => {
     const SQLQuery = `
-    SELECT correct_answer 
-    FROM multiple_choice_option_assignment 
-    WHERE question_assignment_question_id = ?`;
+    SELECT 
+        mco.option_id, 
+        mco.is_correct
+    FROM 
+        multiple_choice_option_assignment mco
+    WHERE 
+        mco.question_assignment_question_id = ?
+        AND mco.is_correct = 'benar';
+    `;
     return dbPool.execute(SQLQuery, [questionId]);
 };
 
-const insertScore = (questionId, score) => {
+const getUserAndAssignmentDetails = (userId, assignmentId) => {
     const SQLQuery = `
-    INSERT INTO scores (question_id, score) 
-    VALUES (?, ?)`;
-    return dbPool.execute(SQLQuery, [questionId, score]);
+    SELECT 
+        u.nama_lengkap AS user_name,
+        c.nama_course AS course_name,
+        c.course_id,
+        a.title AS assignment_name,
+        a.assignment_id
+    FROM 
+        user u
+    JOIN 
+        course_enrollment ce ON u.user_id = ce.user_user_id
+    JOIN 
+        course c ON ce.course_id = c.course_id
+    JOIN 
+        assignment a ON c.course_id = a.course_id
+    WHERE 
+        u.user_id = ? AND a.assignment_id = ?;
+    `;
+    return dbPool.execute(SQLQuery, [userId, assignmentId]);
 };
 
 
+
 module.exports = {
-    // getQuestionsByType,
-    // getAnswerByQuestionId,
     getQuestionsByAssignmentId,
     getAnswerByQuestionsId,
     getAssignmentType,
-    getMultipleChoiceQuestions,
     insertTotalScore,
-    getCorrectAnswer,
-    insertScore,
+    getScore,
+    updateTotalScore,
+    getCorrectOption,
+    getUserAndAssignmentDetails,
 }
