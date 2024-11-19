@@ -20,7 +20,14 @@ const getAssignmentByUser = async (req, res) => {
         if (tanggal) {
             const tanggalObj = new Date(tanggal);
             const [year, month, day] = tanggalObj.toISOString().split("T")[0].split("-");
-            return `${day}-${month}-${year}`;
+            
+            // Nama bulan dalam bahasa Indonesia
+            const namaBulan = [
+                "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+                "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+            ];
+
+            return `${parseInt(day, 10)} ${namaBulan[parseInt(month, 10) - 1]} ${year}`;
         }
         return tanggal;
       };
@@ -60,12 +67,19 @@ const getTodoUser = async (req, res) => {
   
         // Format tanggal untuk setiap tugas tanpa mengubah zona waktu
         const formatTanggal = (tanggal) => {
-          if (tanggal) {
-              const tanggalObj = new Date(tanggal);
-              const [year, month, day] = tanggalObj.toISOString().split("T")[0].split("-");
-              return `${day}-${month}-${year}`;
-          }
-          return tanggal;
+            if (tanggal) {
+                const tanggalObj = new Date(tanggal);
+                const [year, month, day] = tanggalObj.toISOString().split("T")[0].split("-");
+                
+                // Nama bulan dalam bahasa Indonesia
+                const namaBulan = [
+                    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+                    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+                ];
+
+                return `${parseInt(day, 10)} ${namaBulan[parseInt(month, 10) - 1]} ${year}`;
+            }
+            return tanggal;
         };
   
         // Proses setiap assignment untuk format tanggal_mulai dan tanggal_selesai
@@ -107,7 +121,14 @@ const getAssignmentByUserCourse = async (req, res) => {
             if (tanggal) {
                 const tanggalObj = new Date(tanggal);
                 const [year, month, day] = tanggalObj.toISOString().split("T")[0].split("-");
-                return `${day}-${month}-${year}`;
+                
+                // Nama bulan dalam bahasa Indonesia
+                const namaBulan = [
+                    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+                    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+                ];
+
+                return `${parseInt(day, 10)} ${namaBulan[parseInt(month, 10) - 1]} ${year}`;
             }
             return tanggal;
         };
@@ -151,7 +172,14 @@ const getAssignmentByUserCourse = async (req, res) => {
             if (tanggal) {
                 const tanggalObj = new Date(tanggal);
                 const [year, month, day] = tanggalObj.toISOString().split("T")[0].split("-");
-                return `${day}-${month}-${year}`;
+                
+                // Nama bulan dalam bahasa Indonesia
+                const namaBulan = [
+                    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+                    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+                ];
+
+                return `${parseInt(day, 10)} ${namaBulan[parseInt(month, 10) - 1]} ${year}`;
             }
             return tanggal;
         };
@@ -201,7 +229,14 @@ const getAssignmentByUserCoursePostActivity = async (req, res) => {
             if (tanggal) {
                 const tanggalObj = new Date(tanggal);
                 const [year, month, day] = tanggalObj.toISOString().split("T")[0].split("-");
-                return `${day}-${month}-${year}`;
+                
+                // Nama bulan dalam bahasa Indonesia
+                const namaBulan = [
+                    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+                    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+                ];
+
+                return `${parseInt(day, 10)} ${namaBulan[parseInt(month, 10) - 1]} ${year}`;
             }
             return tanggal;
         };
@@ -251,7 +286,14 @@ const getAssignmentByAssignmentId = async (req, res) => {
             if (tanggal) {
                 const tanggalObj = new Date(tanggal);
                 const [year, month, day] = tanggalObj.toISOString().split("T")[0].split("-");
-                return `${day}-${month}-${year}`;
+                
+                // Nama bulan dalam bahasa Indonesia
+                const namaBulan = [
+                    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+                    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+                ];
+
+                return `${parseInt(day, 10)} ${namaBulan[parseInt(month, 10) - 1]} ${year}`;
             }
             return tanggal;
         };
