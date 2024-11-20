@@ -1,4 +1,4 @@
-const MateriModel = require("../models/pre-reading");
+const MateriModel = require("../models/preReading");
 
 const getMateriByUser = async (req, res) => {
   try {

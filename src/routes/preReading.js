@@ -1,5 +1,5 @@
 const express = require("express");
-const MateriController = require("../controller/pre-reading.js");
+const MateriController = require("../controller/preReading.js");
 
 const router = express.Router();
 

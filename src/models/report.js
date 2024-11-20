@@ -61,7 +61,7 @@ const getReportData = async (userId) => {
   return dbPool.execute(SQLQuery, [userId, userId, userId, userId]);
 };
 
-const getReportByPhaseTopic = async (userId) => {
+const getReportByPhaseTopic = async (userId, phase, topic) => {
     const SQLQuery = `
     SELECT 
       c.course_id,
@@ -82,7 +82,7 @@ const getReportByPhaseTopic = async (userId) => {
               FROM assignment a
               LEFT JOIN score_user_assignment sua_sub 
               ON a.assignment_id = sua_sub.assignment_id 
-                  AND sua_sub.user_id = ? -- Hanya untuk user tertentu
+                  AND sua_sub.user_id = ?
               WHERE a.course_id = c.course_id
               -- Assignment yang tidak ada skor (NULL) atau berstatus Incomplete
               AND (sua_sub.assignment_id IS NULL OR sua_sub.active_status = 'Incomplete')
@@ -109,19 +109,23 @@ const getReportByPhaseTopic = async (userId) => {
           WHERE a.course_id = c.course_id
           AND sua_sub.active_status = 'Complete'
       ) AS jumlah_assignment_complete
-      FROM 
+    FROM 
       course c
-      LEFT JOIN assignment a ON c.course_id = a.course_id
-      LEFT JOIN score_user_assignment sua 
-      ON a.assignment_id = sua.assignment_id 
-      AND sua.user_id = ? -- Pastikan hanya data untuk user tertentu
-      GROUP BY 
+    INNER JOIN topik t ON c.topik_id = t.topik_id
+    INNER JOIN phase p ON t.phase_id = p.phase_id
+    LEFT JOIN assignment a ON c.course_id = a.course_id
+    LEFT JOIN score_user_assignment sua 
+    ON a.assignment_id = sua.assignment_id 
+    AND sua.user_id = ?
+    WHERE p.phase_id = ? AND t.topik_id = ?
+    GROUP BY 
       c.course_id, c.nama_course;
     `;
-  
-    return dbPool.execute(SQLQuery, [userId, userId, userId, userId]);
-  };
+
+    return dbPool.execute(SQLQuery, [userId, userId, userId, userId, phase, topic]);
+};
 
 module.exports = {
     getReportData,
+    getReportByPhaseTopic,
 }
