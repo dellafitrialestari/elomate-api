@@ -47,9 +47,10 @@ const getTodoUser = (userId) => {
     WHERE 
         ce.user_user_id = ?
         AND COALESCE(sua.active_status, 'Incomplete') = 'Incomplete'
-
     GROUP BY 
-        a.assignment_id, a.course_id, c.nama_course, a.title, a.question_type, a.tanggal_mulai, a.tanggal_selesai, a.category;
+        a.assignment_id, a.course_id, c.nama_course, a.title, a.question_type, a.tanggal_mulai, a.tanggal_selesai, a.category
+    ORDER BY 
+        a.tanggal_selesai ASC;
     `;
     return dbPool.execute(SQLQuery, [userId]);
 }

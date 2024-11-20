@@ -240,16 +240,16 @@ const createNewUser = async (req, res) => {
 };
 
 const updateUser = async (req, res) => {
-  const { idUser } = req.params;
   const { body } = req;
   try {
+    const idUser = req.user.userId;
     await UsersModel.updateUser(body, idUser);
     res.json({
       message: "UPDATE user success",
-      data: {
-        id: idUser,
-        ...body,
-      },
+      // data: {
+      //   id: idUser,
+      //   ...body,
+      // },
     });
   } catch (error) {
     res.status(500).json({

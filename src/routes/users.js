@@ -12,6 +12,9 @@ router.post("/register", UserController.createNewUser);
 // READ - GET by Token
 router.get("/me", UserController.getCurrentUser);
 
+// UPDATE - PATCH
+router.patch("/me", UserController.updateUser);
+
 // READ - GET by ID
 router.get("/:idUser", UserController.getUserById);
 
@@ -23,9 +26,6 @@ router.get("/email/:emailUser", UserController.getUserByEmail);
 
 // READ - GET
 router.get("/", UserController.getAllUsers);
-
-// UPDATE - PATCH
-router.patch("/:idUser", UserController.updateUser);
 
 // DELETE - DELETE
 router.delete("/:idUser", UserController.deleteUser);

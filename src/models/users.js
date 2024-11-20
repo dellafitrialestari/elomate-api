@@ -68,9 +68,9 @@ const createNewUser = (body) => {
 
 const updateUser = (body, idUser) => {
     const SQLQuery = `UPDATE user 
-                      SET nama_lengkap = ?, email = ?, domisili = ? 
+                      SET email = ?, tempat_lahir = ?, tanggal_lahir = ?, domisili = ?, no_hp = ? 
                       WHERE user_id = ?`;
-    const values = [body.nama_lengkap, body.email, body.domisili, idUser];
+    const values = [body.email, body.tempat_lahir, body.tanggal_lahir, body.domisili, body.no_hp, idUser];
 
     return dbPool.execute(SQLQuery, values);
 }
