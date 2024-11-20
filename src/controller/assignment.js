@@ -268,7 +268,7 @@ const getAssignmentByUserCoursePostActivity = async (req, res) => {
         // Respon JSON dengan format yang diinginkan
         return res.status(200).json({
             course_id: courseId,
-            progress: `${progress}%`,
+            progress: `${progress}`,
             list_activity: formattedAssignments,
         });
     } catch (error) {
