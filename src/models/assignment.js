@@ -130,8 +130,8 @@ const getAssignmentByUserCoursePostActivity = (userId, courseId) => {
     LEFT JOIN 
         score_user_assignment sua ON a.assignment_id = sua.assignment_id AND sua.user_id = ce.user_user_id
     WHERE 
-        ce.user_user_id = 8 
-        AND a.course_id = 1
+        ce.user_user_id = ? 
+        AND a.course_id = ?
         AND FIND_IN_SET(a.category, 'post_test,tugas') > 0
     GROUP BY 
         a.assignment_id, 

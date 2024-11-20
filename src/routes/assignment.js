@@ -6,7 +6,7 @@ const router = express.Router();
 // GET - course by userId
 router.get("/", AssignmentController.getAssignmentByUser);
 
-// GET - course by userId dan CourseId
+// GET - assignment by userId dan CourseId
 router.get("/:courseId", AssignmentController.getAssignmentByUserCourse);
 
 // GET - ToDo List

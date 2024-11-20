@@ -7,6 +7,7 @@ const coursesRoutes = require("./routes/courses");
 const preReadingRoutes = require("./routes/pre-reading");
 const assignmentRoutes = require("./routes/assignment");
 const questionsRoutes = require("./routes/questions");
+const reportRoutes = require("./routes/report");
 
 const middlewareLogRequest = require("./middleware/logs");
 const authenticateJWT = require("./middleware/auth");
@@ -32,6 +33,8 @@ app.use("/preReading", preReadingRoutes);
 app.use("/assignment", assignmentRoutes);
 
 app.use("/questions", questionsRoutes);
+
+app.use("/report", reportRoutes);
 
 // app.post('/upload',upload.single('photo'),(req, res) => {
 //     res.json({
