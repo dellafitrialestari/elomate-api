@@ -9,6 +9,7 @@ const assignmentRoutes = require("./routes/assignment");
 const questionsRoutes = require("./routes/questions");
 const reportRoutes = require("./routes/report");
 const participantRoutes = require("./routes/participantData");
+const mentoringRoutes = require("./routes/mentoring");
 
 const middlewareLogRequest = require("./middleware/logs");
 const authenticateJWT = require("./middleware/auth");
@@ -38,6 +39,8 @@ app.use("/questions", questionsRoutes);
 app.use("/report", reportRoutes);
 
 app.use("/participantData", participantRoutes);
+
+app.use("/mentoring", mentoringRoutes);
 
 // app.post('/upload',upload.single('photo'),(req, res) => {
 //     res.json({
