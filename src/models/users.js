@@ -45,7 +45,7 @@ const getUserById = (idUser) => {
     `;
   
     return dbPool.execute(SQLQuery, [idUser]);
-  };
+};
 
 const getUserByNrp = (nrpUser) => {
     const SQLQuery = `SELECT * FROM user WHERE nrp=${nrpUser}`;
@@ -91,6 +91,17 @@ const deleteUser = (idUser) => {
     return dbPool.execute(SQLQuery, [idUser]);
 }
 
+const getPasswordById = async (userId) => {
+    const SQLQuery = `
+        SELECT password
+        FROM user
+        WHERE user_id = ?
+        LIMIT 1;
+    `;
+    return dbPool.execute(SQLQuery, [userId]);
+};
+
+
 module.exports = {
     verifyUser,
     getAllUsers,
@@ -101,4 +112,5 @@ module.exports = {
     updateUser,
     deleteUser,
     updatePassword,
+    getPasswordById,
 }

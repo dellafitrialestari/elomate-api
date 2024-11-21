@@ -289,7 +289,7 @@ const updatePassword = async (req, res) => {
     try {
         // Ambil data user berdasarkan userId dari middleware auth
         const userId = req.user.userId; // Pastikan middleware auth benar
-        const [userData] = await UsersModel.getUserById(userId);
+        const [userData] = await UsersModel.getPasswordById(userId);
 
         if (!userData.length) {
             return res.status(404).json({
@@ -300,8 +300,8 @@ const updatePassword = async (req, res) => {
 
         const user = userData[0];
 
-        console.log("Debugging:", { userId, currentPassword, newPassword, user });
-        
+        // console.log("Debugging:", { userId, currentPassword, newPassword, user });
+
         if (!user.password) {
             return res.status(400).json({
                 message: "Password not set for this user",
@@ -336,6 +336,7 @@ const updatePassword = async (req, res) => {
         });
     }
 };
+
 
 
 module.exports = {

@@ -14,7 +14,7 @@ router.get("/me", UserController.getCurrentUser);
 
 // UPDATE - PATCH
 router.patch("/me", UserController.updateUser);
-
+ 
 // UPDATE - PATCH
 router.patch("/me/password", UserController.updatePassword);
 

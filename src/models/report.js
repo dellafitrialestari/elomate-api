@@ -14,7 +14,7 @@ const getReportData = async (userId) => {
             SELECT 1
             FROM assignment a
             WHERE a.course_id = c.course_id
-        ) THEN 'Tidak ada assignment'
+        ) THEN '-' -- THEN 'Tidak ada assignment'
         -- Check jika ada assignment yang tidak ada di score_user_assignment atau status "Incomplete" untuk user tertentu
         WHEN EXISTS (
             SELECT 1
@@ -50,15 +50,20 @@ const getReportData = async (userId) => {
     ) AS jumlah_assignment_complete
     FROM 
     course c
-    LEFT JOIN assignment a ON c.course_id = a.course_id
-    LEFT JOIN score_user_assignment sua 
-    ON a.assignment_id = sua.assignment_id 
+    LEFT JOIN 
+        assignment a ON c.course_id = a.course_id
+    JOIN 
+        course_enrollment ce ON c.course_id = ce.course_id
+    LEFT JOIN 
+        score_user_assignment sua ON a.assignment_id = sua.assignment_id 
     AND sua.user_id = ? -- Pastikan hanya data untuk user tertentu
+    WHERE 
+    	ce.user_user_id = ? 
     GROUP BY 
     c.course_id, c.nama_course;
   `;
 
-  return dbPool.execute(SQLQuery, [userId, userId, userId, userId]);
+  return dbPool.execute(SQLQuery, [userId, userId, userId, userId, userId]);
 };
 
 const getReportByPhaseTopic = async (userId, phase, topic) => {
@@ -75,7 +80,7 @@ const getReportByPhaseTopic = async (userId, phase, topic) => {
               SELECT 1
               FROM assignment a
               WHERE a.course_id = c.course_id
-          ) THEN 'Tidak ada assignment'
+          ) THEN '-' -- THEN 'Tidak ada assignment'
           -- Check jika ada assignment yang tidak ada di score_user_assignment atau status "Incomplete" untuk user tertentu
           WHEN EXISTS (
               SELECT 1
@@ -111,18 +116,27 @@ const getReportByPhaseTopic = async (userId, phase, topic) => {
       ) AS jumlah_assignment_complete
     FROM 
       course c
-    INNER JOIN topik t ON c.topik_id = t.topik_id
-    INNER JOIN phase p ON t.phase_id = p.phase_id
-    LEFT JOIN assignment a ON c.course_id = a.course_id
-    LEFT JOIN score_user_assignment sua 
+    INNER JOIN 
+    	topik t ON c.topik_id = t.topik_id
+    INNER JOIN 
+    	phase p ON t.phase_id = p.phase_id
+    LEFT JOIN 
+    	assignment a ON c.course_id = a.course_id
+    JOIN 
+        course_enrollment ce ON c.course_id = ce.course_id
+    LEFT JOIN 
+    	score_user_assignment sua 
     ON a.assignment_id = sua.assignment_id 
     AND sua.user_id = ?
-    WHERE p.phase_id = ? AND t.topik_id = ?
+    WHERE 
+    	ce.user_user_id = ? 
+        AND p.phase_id = ? 
+        AND t.topik_id = ? 
     GROUP BY 
       c.course_id, c.nama_course;
     `;
 
-    return dbPool.execute(SQLQuery, [userId, userId, userId, userId, phase, topic]);
+    return dbPool.execute(SQLQuery, [userId, userId, userId, userId, userId, phase, topic]);
 };
 
 module.exports = {
