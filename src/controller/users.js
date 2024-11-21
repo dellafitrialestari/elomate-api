@@ -282,7 +282,6 @@ const updatePassword = async (req, res) => {
     if (!currentPassword || !newPassword) {
         return res.status(400).json({
             message: "Current password and new password are required",
-            data: null,
         });
     }
 
@@ -294,7 +293,6 @@ const updatePassword = async (req, res) => {
         if (!userData.length) {
             return res.status(404).json({
                 message: "User not found",
-                data: null,
             });
         }
 
@@ -305,7 +303,6 @@ const updatePassword = async (req, res) => {
         if (!user.password) {
             return res.status(400).json({
                 message: "Password not set for this user",
-                data: null,
             });
         }
 
@@ -314,7 +311,6 @@ const updatePassword = async (req, res) => {
         if (!isMatch) {
             return res.status(401).json({
                 message: "Current password is incorrect",
-                data: null,
             });
         }
 
