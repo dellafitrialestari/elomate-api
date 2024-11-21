@@ -275,6 +275,69 @@ const deleteUser = async (req, res) => {
   }
 };
 
+const updatePassword = async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+
+    // Validasi input
+    if (!currentPassword || !newPassword) {
+        return res.status(400).json({
+            message: "Current password and new password are required",
+            data: null,
+        });
+    }
+
+    try {
+        // Ambil data user berdasarkan userId dari middleware auth
+        const userId = req.user.userId; // Pastikan middleware auth benar
+        const [userData] = await UsersModel.getUserById(userId);
+
+        if (!userData.length) {
+            return res.status(404).json({
+                message: "User not found",
+                data: null,
+            });
+        }
+
+        const user = userData[0];
+
+        console.log("Debugging:", { userId, currentPassword, newPassword, user });
+        
+        if (!user.password) {
+            return res.status(400).json({
+                message: "Password not set for this user",
+                data: null,
+            });
+        }
+
+        // Bandingkan password lama dengan hash di database
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(401).json({
+                message: "Current password is incorrect",
+                data: null,
+            });
+        }
+
+        // Hash password baru
+        const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+        // Update password di database
+        await UsersModel.updatePassword(hashedNewPassword, userId);
+
+        return res.json({
+            message: "Password updated successfully",
+            data: null,
+        });
+    } catch (error) {
+        console.error("Error updating password:", error.message);
+        return res.status(500).json({
+            message: "Server Error",
+            serverMessage: error.message,
+        });
+    }
+};
+
+
 module.exports = {
   loginUser,
   getCurrentUser,
@@ -285,4 +348,5 @@ module.exports = {
   createNewUser,
   updateUser,
   deleteUser,
+  updatePassword,
 };

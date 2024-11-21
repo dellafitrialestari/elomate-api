@@ -15,6 +15,9 @@ router.get("/me", UserController.getCurrentUser);
 // UPDATE - PATCH
 router.patch("/me", UserController.updateUser);
 
+// UPDATE - PATCH
+router.patch("/me/password", UserController.updatePassword);
+
 // READ - GET by ID
 router.get("/:idUser", UserController.getUserById);
 

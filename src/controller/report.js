@@ -47,14 +47,25 @@ const getReportByPhaseTopic = async (req, res) => {
             });
         }
 
-        // float to integer
+        // Float to integer and calculate average score
         const convertedReport = report.map(course => ({
             ...course,
             nilai_total_course: Math.round(course.nilai_total_course) // Pembulatan
         }));
 
-        // Return the array directly without wrapping in an object
-        return res.status(200).json(convertedReport);
+        const averageScore = convertedReport.length > 0 
+        ? Math.round(
+            convertedReport.reduce((sum, course) => sum + course.nilai_total_course, 0) / convertedReport.length
+        )
+        : 0;
+
+        // Response structure
+        const response = {
+            "rata-rata_semua_course": parseFloat(averageScore),
+            "list_course": convertedReport,
+        };
+
+        return res.status(200).json(response);
     } catch (error) {
         console.error("Error fetching report:", error);
         return res.status(500).json({

@@ -75,6 +75,17 @@ const updateUser = (body, idUser) => {
     return dbPool.execute(SQLQuery, values);
 }
 
+const updatePassword = (hashedPassword, userId) => {
+    const SQLQuery = `
+        UPDATE user
+        SET password = ? 
+        WHERE user_id = ?
+    `;
+    const values = [hashedPassword, userId];
+    return dbPool.execute(SQLQuery, values);
+};
+    
+
 const deleteUser = (idUser) => {
     const SQLQuery = `DELETE FROM user WHERE user_id = ?`;
     return dbPool.execute(SQLQuery, [idUser]);
@@ -89,4 +100,5 @@ module.exports = {
     createNewUser,
     updateUser,
     deleteUser,
+    updatePassword,
 }
