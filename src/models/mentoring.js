@@ -96,6 +96,17 @@ const getTypeMentoring = async () => {
     return enumValues;
 };
 
+const deleteMentoring = (mentoringId, userId) => {
+    const SQLQuery = `
+    DELETE FROM 
+        mentoring 
+    WHERE 
+        mentoring_id = ?
+        AND user_user_id = ?;
+    `;
+    return dbPool.execute(SQLQuery, [mentoringId, userId]);
+}
+
 module.exports = {
     getMentoringDataByUserId,
     getCourseIdByName,
@@ -103,4 +114,5 @@ module.exports = {
     postMentoringFeedback,
     getMetodeMentoring,
     getTypeMentoring,
+    deleteMentoring,
 };

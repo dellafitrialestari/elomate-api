@@ -112,7 +112,7 @@ const postMentoringFeedback = async (req, res) => {
         // Update mentoring feedback in the database
         await MentoringModel.postMentoringFeedback(userId, mentoringId, lesson_learned_competencies, catatan_mentor);
 
-        res.status(200).json({ message: "Mentoring feedback updated successfully" });
+        res.status(200).json({ message: "Mentoring feedback insert successfully" });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Internal server error" });
@@ -176,10 +176,47 @@ const getTypeMentoring = async (req, res) => {
     }
 };
 
+const deleteMentoring = async (req, res) => {
+    const { mentoringId } = req.params;
+
+    try {
+        const userId = req.user.userId; // Ambil userId dari token
+
+        // Validasi parameter mentoringId
+        if (!mentoringId || isNaN(Number(mentoringId))) {
+            return res.status(400).json({
+                message: "Invalid mentoring ID",
+            });
+        }
+
+        // Panggil fungsi delete di model
+        const [result] = await MentoringModel.deleteMentoring(Number(mentoringId), userId);
+
+        // Cek apakah ada baris yang dihapus
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                message: "Mentoring not found or access denied",
+            });
+        }
+
+        // Respon sukses
+        res.status(200).json({
+            message: "Delete mentoring success",
+        });
+    } catch (error) {
+        console.error("Error deleting mentoring:", error);
+        res.status(500).json({
+            message: "Server Error",
+            serverMessage: error.message,
+        });
+    }
+};
+
 module.exports = {
     getMentoringData,
     postMentoring,
     postMentoringFeedback,
     getMetodeMentoring,
     getTypeMentoring,
+    deleteMentoring,
 };

@@ -8,11 +8,13 @@ router.get('/mentoringData', MentoringController.getMentoringData);
 
 router.post("/insert", MentoringController.postMentoring);
 
-// 
 router.patch("/insertFeedback/:mentoringId", MentoringController.postMentoringFeedback);
 
 router.get("/metode", MentoringController.getMetodeMentoring);
 
 router.get("/tipe", MentoringController.getTypeMentoring);
+
+// DELETE - DELETE
+router.delete("/delete/:mentoringId", MentoringController.deleteMentoring);
 
 module.exports = router;
