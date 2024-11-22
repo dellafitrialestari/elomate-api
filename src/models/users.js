@@ -26,6 +26,8 @@ const getUserById = (idUser) => {
           user.posisi,
           user.asal_universitas,
           user.jurusan,
+          user.tahun_lulus,
+          user.jenjang_studi,
           user.tempat_lahir,
           user.tanggal_lahir,
           user.domisili,
