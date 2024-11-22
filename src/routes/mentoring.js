@@ -1,13 +1,18 @@
 const express = require("express");
-const ReportController = require("../controller/mentoring.js");
+const MentoringController = require("../controller/mentoring.js");
 
 const router = express.Router();
 
 
-router.post("/insert", ReportController.postMentoring);
+router.get('/mentoringData', MentoringController.getMentoringData);
+
+router.post("/insert", MentoringController.postMentoring);
 
 // 
-router.post("/insertFeedback", ReportController.postMentoringFeedback);
+router.patch("/insertFeedback/:mentoringId", MentoringController.postMentoringFeedback);
 
+router.get("/metode", MentoringController.getMetodeMentoring);
+
+router.get("/tipe", MentoringController.getTypeMentoring);
 
 module.exports = router;

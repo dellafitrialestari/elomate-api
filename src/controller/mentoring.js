@@ -1,5 +1,54 @@
 const MentoringModel = require('../models/mentoring');
 
+const getMentoringData = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+
+        // Fetch mentoring data
+        const mentoringData = await MentoringModel.getMentoringDataByUserId(userId);
+
+        if (!mentoringData || mentoringData.length === 0) {
+            return res.status(404).json({ message: "No mentoring data found" });
+        }
+
+        // Format tanggal tanpa mengubah zona waktu
+        const formatTanggal = (tanggal) => {
+            if (tanggal) {
+                const tanggalObj = new Date(tanggal);
+                const [year, month, day] = tanggalObj.toISOString().split("T")[0].split("-");
+                
+                // Nama bulan dalam bahasa Indonesia
+                const namaBulan = [
+                    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+                    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+                ];
+
+                return `${parseInt(day, 10)} ${namaBulan[parseInt(month, 10) - 1]} ${year}`;
+            }
+            return tanggal;
+        };
+      
+        const formattedData = mentoringData.map((item) => {
+            return Object.fromEntries(
+                Object.entries(item).map(([key, value]) => {
+                    if (key === "tanggal_mentoring") {
+                        return [key, formatTanggal(value)];
+                    }
+                    return [key, value !== null ? value : "-"];
+                })
+            );
+        });
+
+        return res.status(200).json(formattedData);
+    } catch (error) {
+        console.error("Error fetching mentoring data:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            serverMessage: error.message,
+        });
+    }
+};
+
 const postMentoring = async (req, res) => {
     try {
         // Extract user ID from authenticated middleware
@@ -10,6 +59,12 @@ const postMentoring = async (req, res) => {
 
         if (!nama_course || !tanggal_mentoring || !jam_mulai || !jam_selesai || !metode_mentoring || !tipe_mentoring) {
             return res.status(400).json({ message: "All fields are required" });
+        }
+
+        // Validate format of jam_mulai and jam_selesai
+        const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/; // Regex for HH:mm format
+        if (!timeRegex.test(jam_mulai) || !timeRegex.test(jam_selesai)) {
+            return res.status(400).json({ message: "Format dari jam mulai dan jam selesai harus HH:mm" });
         }
 
         // Fetch course_id from database using nama_course
@@ -38,11 +93,93 @@ const postMentoring = async (req, res) => {
 };
 
 
-const postMentoringFeedback = async(req, res) => {
+const postMentoringFeedback = async (req, res) => {
+    try {
+        // Extract user ID from authenticated middleware
+        const userId = req.user.userId; // Ensure middleware sets req.user.userId
+        
+        // Extract mentoringId from request params
+        const { mentoringId } = req.params;
 
-}
+        // Extract data from request body
+        const { lesson_learned_competencies, catatan_mentor } = req.body;
+
+        // Validate required fields
+        if (!lesson_learned_competencies || !catatan_mentor) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+
+        // Update mentoring feedback in the database
+        await MentoringModel.postMentoringFeedback(userId, mentoringId, lesson_learned_competencies, catatan_mentor);
+
+        res.status(200).json({ message: "Mentoring feedback updated successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+
+const getMetodeMentoring = async (req, res) => {
+  
+    // const { phase, topic } = req.params;
+  
+    // if (!phase || !topic) {
+    //     return res.status(400).json({
+    //         message: "Phase and topic are required parameters",
+    //         data: null,
+    //     });
+    // }
+  
+    try {
+        // const userId = req.user.userId;
+        
+        // Fetch courses based on user ID
+        // const [courses] = await CoursesModel.getMetodeMentoring(userId, phase, topic);
+        
+        // if (!courses || courses.length === 0) {
+        //     return res.status(404).json({
+        //         message: "No courses found for this user",
+        //         data: null,
+        //     });
+        // }
+
+        const metodeMentoring = await MentoringModel.getMetodeMentoring();
+
+        return res.status(200).json({
+            metode_mentoring: metodeMentoring
+        });
+    } catch (error) {
+        console.error("Error fetching metode:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            serverMessage: error.message,
+        });
+    }
+};
+
+const getTypeMentoring = async (req, res) => {
+  
+    try {
+
+        const tipeMentoring = await MentoringModel.getTypeMentoring();
+
+        return res.status(200).json({
+            tipe_mentoring: tipeMentoring
+        });
+    } catch (error) {
+        console.error("Error fetching tipe_mentoring:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            serverMessage: error.message,
+        });
+    }
+};
 
 module.exports = {
+    getMentoringData,
     postMentoring,
     postMentoringFeedback,
+    getMetodeMentoring,
+    getTypeMentoring,
 };
