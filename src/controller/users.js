@@ -240,24 +240,62 @@ const createNewUser = async (req, res) => {
 };
 
 const updateUser = async (req, res) => {
-  const { body } = req;
+  const {
+      asal_universitas,
+      jurusan,
+      tempat_lahir,
+      tanggal_lahir,
+      domisili,
+      no_hp,
+  } = req.body;
+
+  // Validasi input
+  if (
+      !asal_universitas ||
+      !jurusan ||
+      !tempat_lahir ||
+      !tanggal_lahir ||
+      !domisili ||
+      !no_hp
+  ) {
+      return res.status(400).json({
+          message: "All fields are required",
+      });
+  }
+
   try {
-    const idUser = req.user.userId;
-    await UsersModel.updateUser(body, idUser);
-    res.json({
-      message: "UPDATE user success",
-      // data: {
-      //   id: idUser,
-      //   ...body,
-      // },
-    });
+      // Konversi tanggal dari DD-MM-YYYY ke YYYY-MM-DD
+      const [day, month, year] = tanggal_lahir.split("-");
+      const formattedDate = `${year}-${month}-${day}`;
+
+      // Ambil userId dari middleware auth
+      const userId = req.user.userId;
+
+      // Panggil model untuk update data
+      await UsersModel.updateUser(
+          {
+              asal_universitas,
+              jurusan,
+              tempat_lahir,
+              tanggal_lahir: formattedDate,
+              domisili,
+              no_hp,
+          },
+          userId
+      );
+
+      return res.json({
+          message: "User profile updated successfully",
+      });
   } catch (error) {
-    res.status(500).json({
-      message: "Server Error",
-      serverMessage: error,
-    });
+      console.error("Error updating user profile:", error.message);
+      return res.status(500).json({
+          message: "Server Error",
+          serverMessage: error.message,
+      });
   }
 };
+
 
 const deleteUser = async (req, res) => {
   const { idUser } = req.params;
