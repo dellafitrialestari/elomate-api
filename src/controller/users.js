@@ -247,6 +247,8 @@ const updateUser = async (req, res) => {
       tanggal_lahir,
       domisili,
       no_hp,
+      tahun_lulus,
+      jenjang_studi,
   } = req.body;
 
   // Validasi input
@@ -256,7 +258,9 @@ const updateUser = async (req, res) => {
       !tempat_lahir ||
       !tanggal_lahir ||
       !domisili ||
-      !no_hp
+      !no_hp ||
+      !tahun_lulus ||
+      !jenjang_studi
   ) {
       return res.status(400).json({
           message: "All fields are required",
@@ -280,6 +284,8 @@ const updateUser = async (req, res) => {
               tanggal_lahir: formattedDate,
               domisili,
               no_hp,
+              tahun_lulus,
+              jenjang_studi,
           },
           userId
       );
