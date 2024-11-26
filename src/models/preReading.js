@@ -38,11 +38,13 @@ const getMateriByUserCourse = (userId, courseId) => {
         m.materi_id,
         m.title_materi,
         m.description_materi,
-        m.konten_materi,
         m.category,
         c.course_id,
         c.nama_course,
-        b.batch_name
+        b.batch_name,
+        f.file_name_id,
+        f.bucket_name,
+        f.content_type
     FROM 
         materi m
     JOIN 
@@ -53,9 +55,11 @@ const getMateriByUserCourse = (userId, courseId) => {
         user u ON ce.user_user_id = u.user_id
     JOIN 
         batch_data b ON u.batch_data_batch_id = b.batch_id
+    LEFT JOIN 
+        files f ON m.materi_id = f.materi_id
     WHERE 
-        u.user_id = ? 
-        AND c.course_id = ?;
+        u.user_id = ?
+		AND c.course_id = ?;
     `;
     return dbPool.execute(SQLQuery, [userId, courseId]);
 }
@@ -66,11 +70,13 @@ const getMateriByMateriId = (userId, materiId) => {
         m.materi_id,
         m.title_materi,
         m.description_materi,
-        m.konten_materi,
         m.category,
         c.course_id,
         c.nama_course,
-        b.batch_name
+        b.batch_name,
+        f.file_name_id,
+        f.bucket_name,
+        f.content_type
     FROM 
         materi m
     JOIN 
@@ -81,8 +87,10 @@ const getMateriByMateriId = (userId, materiId) => {
         user u ON ce.user_user_id = u.user_id
     JOIN 
         batch_data b ON u.batch_data_batch_id = b.batch_id
+    LEFT JOIN 
+        files f ON m.materi_id = f.materi_id
     WHERE 
-        u.user_id = ? 
+        u.user_id = ?
         AND m.materi_id = ?;
     `;
     return dbPool.execute(SQLQuery, [userId, materiId]);

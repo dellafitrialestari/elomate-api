@@ -83,64 +83,194 @@ const getMateriByUser = async (req, res) => {
   }
 };
 
-  
 const getMateriByUserCourse = async (req, res) => {
   const { courseId } = req.params;
+
   try {
-      const userId = req.user.userId; // Ensure userId is extracted via middleware authentication
-      
-      // Fetch courses based on user ID
-      const [materi] = await MateriModel.getMateriByUserCourse(userId, courseId);
-      
-      if (!materi || materi.length === 0) {
-          return res.status(404).json({
-              message: "No learning materials found for this user",
-              data: null,
-          });
-      }
+    const userId = req.user.userId; // userId dari middleware autentikasi
 
-      // Return all courses related to the user
-      // return res.status(200).json({ courses });
+    const [materi] = await MateriModel.getMateriByUserCourse(userId, courseId);
 
-      // Return the array directly without wrapping in an object
-      return res.status(200).json(materi);
-  } catch (error) {
-      console.error("Error fetching courses:", error);
-      return res.status(500).json({
-          message: "Internal server error",
-          serverMessage: error.message,
+    if (!materi || materi.length === 0) {
+      return res.status(404).json({
+        message: "No learning materials found for this user",
+        data: null,
       });
+    }
+
+    // materi by `materi_id`
+    const groupedMateri = materi.reduce((acc, item) => {
+      const { materi_id, file_name_id, bucket_name, content_type, ...rest } = item;
+      if (!acc[materi_id]) {
+        acc[materi_id] = { ...rest, materi_id, files: [] };
+      }
+      if (file_name_id) {
+        acc[materi_id].files.push({ file_name_id, bucket_name, content_type });
+      }
+      return acc;
+    }, {});
+
+    // Signed URL setiap file
+    const materiWithSignedUrl = await Promise.all(
+      Object.values(groupedMateri).map(async (materi) => {
+        const updatedFiles = await Promise.all(
+          materi.files.map(async (file) => {
+            if (file.file_name_id && file.bucket_name) {
+              try {
+                const storageFile = storage
+                  .bucket(file.bucket_name) // bucket_name
+                  .file(file.file_name_id);
+
+                const [exists] = await storageFile.exists();
+                if (!exists) {
+                  console.error(`File not found: ${file.file_name_id}`);
+                  return { ...file, signed_url: "File not found" };
+                }
+
+                const options = {
+                  version: "v4",
+                  action: "read",
+                  // expires: Date.now() + 15 * 60 * 1000, // Berlaku 15 menit
+                  expires: Date.now() + 6 * 60 * 60 * 1000, // Berlaku 6 jam
+                };
+
+                const [signedUrl] = await storageFile.getSignedUrl(options);
+                return { ...file, signed_url: signedUrl };
+              } catch (error) {
+                console.error(
+                  `Error generating Signed URL for file: ${file.file_name_id}`,
+                  error
+                );
+                return { ...file, signed_url: "Error generating URL" };
+              }
+            } else {
+              return { ...file, signed_url: "No content" };
+            }
+          })
+        );
+
+        return { ...materi, files: updatedFiles };
+      })
+    );
+
+    return res.status(200).json(materiWithSignedUrl);
+  } catch (error) {
+    console.error("Error fetching learning materials:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+      serverMessage: error.message,
+    });
   }
-};
+};  
 
 const getMateriByMateriId = async (req, res) => {
-    const { materiId } = req.params;
-    try {
-        const userId = req.user.userId; // Ensure userId is extracted via middleware authentication
-        
-        // Fetch courses based on user ID
-        const [materi] = await MateriModel.getMateriByMateriId(userId, materiId);
-        
-        if (!materi || materi.length === 0) {
-            return res.status(404).json({
-                message: "No learning materials found for this user",
-                data: null,
-            });
-        }
-  
-        // Return all courses related to the user
-        // return res.status(200).json({ courses });
-  
-        // Return the array directly without wrapping in an object
-        return res.status(200).json(materi[0]);
-    } catch (error) {
-        console.error("Error fetching courses:", error);
-        return res.status(500).json({
-            message: "Internal server error",
-            serverMessage: error.message,
-        });
+  const { materiId } = req.params;
+
+  try {
+    const userId = req.user.userId; // userId dari middleware autentikasi
+
+    const [materi] = await MateriModel.getMateriByMateriId(userId, materiId);
+
+    if (!materi || materi.length === 0) {
+      return res.status(404).json({
+        message: "No learning materials found for this user",
+        data: null,
+      });
     }
-  };
+
+    // materi by `materi_id`
+    const groupedMateri = materi.reduce((acc, item) => {
+      const { materi_id, file_name_id, bucket_name, content_type, ...rest } = item;
+      if (!acc[materi_id]) {
+        acc[materi_id] = { ...rest, materi_id, files: [] };
+      }
+      if (file_name_id) {
+        acc[materi_id].files.push({ file_name_id, bucket_name, content_type });
+      }
+      return acc;
+    }, {});
+
+    // Signed URL setiap file
+    const materiWithSignedUrl = await Promise.all(
+      Object.values(groupedMateri).map(async (materi) => {
+        const updatedFiles = await Promise.all(
+          materi.files.map(async (file) => {
+            if (file.file_name_id && file.bucket_name) {
+              try {
+                const storageFile = storage
+                  .bucket(file.bucket_name) // bucket_name
+                  .file(file.file_name_id);
+
+                const [exists] = await storageFile.exists();
+                if (!exists) {
+                  console.error(`File not found: ${file.file_name_id}`);
+                  return { ...file, signed_url: "File not found" };
+                }
+
+                const options = {
+                  version: "v4",
+                  action: "read",
+                  // expires: Date.now() + 15 * 60 * 1000, // Berlaku 15 menit
+                  expires: Date.now() + 6 * 60 * 60 * 1000, // Berlaku 6 jam
+                };
+
+                const [signedUrl] = await storageFile.getSignedUrl(options);
+                return { ...file, signed_url: signedUrl };
+              } catch (error) {
+                console.error(
+                  `Error generating Signed URL for file: ${file.file_name_id}`,
+                  error
+                );
+                return { ...file, signed_url: "Error generating URL" };
+              }
+            } else {
+              return { ...file, signed_url: "No content" };
+            }
+          })
+        );
+
+        return { ...materi, files: updatedFiles };
+      })
+    );
+
+    return res.status(200).json(materiWithSignedUrl[0]);
+  } catch (error) {
+    console.error("Error fetching learning materials:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+      serverMessage: error.message,
+    });
+  }
+}; 
+
+// const getMateriByMateriId = async (req, res) => {
+//     const { materiId } = req.params;
+//     try {
+//         const userId = req.user.userId; // Ensure userId is extracted via middleware authentication
+        
+//         // Fetch courses based on user ID
+//         const [materi] = await MateriModel.getMateriByMateriId(userId, materiId);
+        
+//         if (!materi || materi.length === 0) {
+//             return res.status(404).json({
+//                 message: "No learning materials found for this user",
+//                 data: null,
+//             });
+//         }
+  
+//         // Return all courses related to the user
+//         // return res.status(200).json({ courses });
+  
+//         // Return the array directly without wrapping in an object
+//         return res.status(200).json(materi[0]);
+//     } catch (error) {
+//         console.error("Error fetching courses:", error);
+//         return res.status(500).json({
+//             message: "Internal server error",
+//             serverMessage: error.message,
+//         });
+//     }
+//   };
   
 module.exports = {
     getMateriByUser,
