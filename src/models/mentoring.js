@@ -38,6 +38,123 @@ const getMentoringDataByUserId = async (userId) => {
     return rows;
 };
 
+const getUpcomingData = async (userId) => {
+    const SQLQuery = `
+    SELECT DISTINCT 
+        m.mentoring_id,
+        ce.fasilitator_id AS mentor_id,
+        u.nama_lengkap AS nama_fasilitator,
+        cr.topik_id,
+        t.nama_topik,
+        m.course_id,
+        cr.nama_course,
+        m.tipe_mentoring,
+        m.metode_mentoring,
+        m.tanggal_mentoring,
+        m.jam_mulai,
+        m.jam_selesai,
+        CONCAT(m.jam_mulai, ' - ', m.jam_selesai) AS waktu_mentoring,
+        cr.nama_course AS kompetensi_yang_dievaluasi,
+        m.lesson_learned_competencies,
+        m.catatan_mentor,
+        m.status
+    FROM 
+        mentoring m
+    INNER JOIN 
+        course cr ON m.course_id = cr.course_id
+    INNER JOIN 
+        course_enrollment ce ON ce.course_id = m.course_id
+    INNER JOIN 
+        user u ON ce.fasilitator_id = u.user_id
+    INNER JOIN 
+        topik t ON cr.topik_id = t.topik_id
+    WHERE 
+        m.user_user_id = ?
+        AND m.status = "Processing";
+    `;
+
+    const [rows] = await dbPool.execute(SQLQuery, [userId]);
+    return rows;
+};
+
+const getFeedbackData = async (userId) => {
+    const SQLQuery = `
+    SELECT DISTINCT 
+        m.mentoring_id,
+        ce.fasilitator_id AS mentor_id,
+        u.nama_lengkap AS nama_fasilitator,
+        cr.topik_id,
+        t.nama_topik,
+        m.course_id,
+        cr.nama_course,
+        m.tipe_mentoring,
+        m.metode_mentoring,
+        m.tanggal_mentoring,
+        m.jam_mulai,
+        m.jam_selesai,
+        CONCAT(m.jam_mulai, ' - ', m.jam_selesai) AS waktu_mentoring,
+        cr.nama_course AS kompetensi_yang_dievaluasi,
+        m.lesson_learned_competencies,
+        m.catatan_mentor,
+        m.status
+    FROM 
+        mentoring m
+    INNER JOIN 
+        course cr ON m.course_id = cr.course_id
+    INNER JOIN 
+        course_enrollment ce ON ce.course_id = m.course_id
+    INNER JOIN 
+        user u ON ce.fasilitator_id = u.user_id
+    INNER JOIN 
+        topik t ON cr.topik_id = t.topik_id
+    WHERE 
+        m.user_user_id = ?
+        AND m.status = "Need Revision";
+    `;
+
+    const [rows] = await dbPool.execute(SQLQuery, [userId]);
+    return rows;
+};
+
+const getApproveData = async (userId) => {
+    const SQLQuery = `
+    SELECT DISTINCT 
+        m.mentoring_id,
+        ce.fasilitator_id AS mentor_id,
+        u.nama_lengkap AS nama_fasilitator,
+        cr.topik_id,
+        t.nama_topik,
+        m.course_id,
+        cr.nama_course,
+        m.tipe_mentoring,
+        m.metode_mentoring,
+        m.tanggal_mentoring,
+        m.jam_mulai,
+        m.jam_selesai,
+        CONCAT(m.jam_mulai, ' - ', m.jam_selesai) AS waktu_mentoring,
+        cr.nama_course AS kompetensi_yang_dievaluasi,
+        m.lesson_learned_competencies,
+        m.catatan_mentor,
+        m.status
+    FROM 
+        mentoring m
+    INNER JOIN 
+        course cr ON m.course_id = cr.course_id
+    INNER JOIN 
+        course_enrollment ce ON ce.course_id = m.course_id
+    INNER JOIN 
+        user u ON ce.fasilitator_id = u.user_id
+    INNER JOIN 
+        topik t ON cr.topik_id = t.topik_id
+    WHERE 
+        m.user_user_id = ?
+        AND m.status = "Approve";
+    `;
+
+    const [rows] = await dbPool.execute(SQLQuery, [userId]);
+    return rows;
+};
+
 const getCourseIdByName = async (namaCourse) => {
     const SQLQuery = `
         SELECT course_id 
@@ -73,7 +190,7 @@ const postMentoringFeedback = async (userId, mentoringId, lesson_learned_compete
         SET
             lesson_learned_competencies = ?, 
             catatan_mentor = ?,
-            status = 'Need Approval'
+            status = 'Processing'
         WHERE 
             user_user_id = ?
             AND mentoring_id = ?
@@ -113,6 +230,9 @@ const deleteMentoring = (mentoringId, userId) => {
 
 module.exports = {
     getMentoringDataByUserId,
+    getUpcomingData,
+    getFeedbackData,
+    getApproveData,
     getCourseIdByName,
     postMentoring,
     postMentoringFeedback,

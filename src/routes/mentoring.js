@@ -6,6 +6,12 @@ const router = express.Router();
 
 router.get('/mentoringData', MentoringController.getMentoringData);
 
+router.get('/UpcomingData', MentoringController.getUpcomingData);
+
+router.get('/FeedbackData', MentoringController.getFeedbackData);
+
+router.get('/ApproveData', MentoringController.getApproveData);
+
 router.post("/insert", MentoringController.postMentoring);
 
 router.patch("/insertFeedback/:mentoringId", MentoringController.postMentoringFeedback);
