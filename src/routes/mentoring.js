@@ -12,7 +12,7 @@ router.patch("/insertFeedback/:mentoringId", MentoringController.postMentoringFe
 
 router.get("/metode", MentoringController.getMetodeMentoring);
 
-router.get("/tipe", MentoringController.getTypeMentoring);
+router.get("/type", MentoringController.getTypeMentoring);
 
 // DELETE - DELETE
 router.delete("/delete/:mentoringId", MentoringController.deleteMentoring);

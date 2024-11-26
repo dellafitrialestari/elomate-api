@@ -18,27 +18,27 @@ const getMateriByUser = async (req, res) => {
       });
     }
 
-    // Mengelompokkan materi berdasarkan `materi_id`
+    // materi by `materi_id`
     const groupedMateri = materi.reduce((acc, item) => {
-      const { materi_id, file_name_id, content_type, ...rest } = item;
+      const { materi_id, file_name_id, bucket_name, content_type, ...rest } = item;
       if (!acc[materi_id]) {
         acc[materi_id] = { ...rest, materi_id, files: [] };
       }
       if (file_name_id) {
-        acc[materi_id].files.push({ file_name_id, content_type });
+        acc[materi_id].files.push({ file_name_id, bucket_name, content_type });
       }
       return acc;
     }, {});
 
-    // Tambahkan Signed URL untuk setiap file
+    // Signed URL setiap file
     const materiWithSignedUrl = await Promise.all(
       Object.values(groupedMateri).map(async (materi) => {
         const updatedFiles = await Promise.all(
           materi.files.map(async (file) => {
-            if (file.file_name_id) {
+            if (file.file_name_id && file.bucket_name) {
               try {
                 const storageFile = storage
-                  .bucket("elomate-files") // Nama bucket
+                  .bucket(file.bucket_name) // bucket_name
                   .file(file.file_name_id);
 
                 const [exists] = await storageFile.exists();
@@ -50,7 +50,8 @@ const getMateriByUser = async (req, res) => {
                 const options = {
                   version: "v4",
                   action: "read",
-                  expires: Date.now() + 15 * 60 * 1000, // Berlaku 15 menit
+                  // expires: Date.now() + 15 * 60 * 1000, // Berlaku 15 menit
+                  expires: Date.now() + 6 * 60 * 60 * 1000, // Berlaku 6 jam
                 };
 
                 const [signedUrl] = await storageFile.getSignedUrl(options);

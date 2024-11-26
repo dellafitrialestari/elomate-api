@@ -11,6 +11,7 @@ const getMateriByUser = (userId) => {
         c.nama_course,
         b.batch_name,
         f.file_name_id,
+        f.bucket_name,
         f.content_type
     FROM 
         materi m
