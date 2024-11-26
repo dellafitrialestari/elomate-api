@@ -6,24 +6,24 @@ const getMateriByUser = (userId) => {
         m.materi_id,
         m.title_materi,
         m.description_materi,
-        m.konten_materi,
-        f.file_name_id, -- Tambahkan kolom file_name_id
         m.category,
         c.course_id,
         c.nama_course,
-        b.batch_name
+        b.batch_name,
+        f.file_name_id,
+        f.content_type
     FROM 
         materi m
     JOIN 
         course c ON m.course_id = c.course_id
-    JOIN 
-        files f ON m.konten_materi = f.file_name_id
     JOIN 
         course_enrollment ce ON c.course_id = ce.course_id
     JOIN 
         user u ON ce.user_user_id = u.user_id
     JOIN 
         batch_data b ON u.batch_data_batch_id = b.batch_id
+    LEFT JOIN 
+        files f ON m.materi_id = f.materi_id
     WHERE 
         u.user_id = ?;
     `;

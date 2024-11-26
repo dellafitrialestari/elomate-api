@@ -6,63 +6,82 @@ const { Storage } = require("@google-cloud/storage");
 const storage = new Storage();
 
 const getMateriByUser = async (req, res) => {
-    try {
-      const userId = req.user.userId; // userId dari middleware autentikasi
-  
-      const [materi] = await MateriModel.getMateriByUser(userId);
-  
-      if (!materi || materi.length === 0) {
-        return res.status(404).json({
-          message: "No learning materials found for this user",
-          data: null,
-        });
-      }
-  
-      // Generate Signed URL setiap materi
-      const materiWithSignedUrl = await Promise.all(
-        materi.map(async (item) => {
-          if (item.file_name_id) {
-            try {
-              const file = storage
-                          .bucket("elomate-files")
-                          .file(item.file_name_id);
-              const [exists] = await file.exists(); // Cek apakah file ada di storage
-  
-              if (!exists) {
-                console.error(`File not found in storage: ${item.file_name_id}`);
-                return { ...item, signed_url: "File not found" };
-              }
-  
-              const options = {
-                version: "v4",
-                action: "read",
-                expires: Date.now() + 15 * 60 * 1000, // Berlaku 15 menit
-              };
-  
-              const [signedUrl] = await file.getSignedUrl(options);
-              return { ...item, signed_url: signedUrl };
-            } catch (error) {
-              console.error(
-                `Error generating Signed URL for file: ${item.konten_materi}`,
-                error
-              );
-              return { ...item, signed_url: "Error generating URL" };
-            }
-          } else {
-            return { ...item, signed_url: "No content" };
-          }
-        })
-      );
-  
-      return res.status(200).json(materiWithSignedUrl);
-    } catch (error) {
-      console.error("Error fetching learning materials:", error);
-      return res.status(500).json({
-        message: "Internal server error",
-        serverMessage: error.message,
+  try {
+    const userId = req.user.userId; // userId dari middleware autentikasi
+
+    const [materi] = await MateriModel.getMateriByUser(userId);
+
+    if (!materi || materi.length === 0) {
+      return res.status(404).json({
+        message: "No learning materials found for this user",
+        data: null,
       });
     }
+
+    // Mengelompokkan materi berdasarkan `materi_id`
+    const groupedMateri = materi.reduce((acc, item) => {
+      const { materi_id, file_name_id, content_type, ...rest } = item;
+      if (!acc[materi_id]) {
+        acc[materi_id] = { ...rest, materi_id, files: [] };
+      }
+      if (file_name_id) {
+        acc[materi_id].files.push({ file_name_id, content_type });
+      }
+      return acc;
+    }, {});
+
+    // Tambahkan Signed URL untuk setiap file
+    const materiWithSignedUrl = await Promise.all(
+      Object.values(groupedMateri).map(async (materi) => {
+        const updatedFiles = await Promise.all(
+          materi.files.map(async (file) => {
+            if (file.file_name_id) {
+              try {
+                const storageFile = storage
+                  .bucket("elomate-files") // Nama bucket
+                  .file(file.file_name_id);
+
+                const [exists] = await storageFile.exists();
+                if (!exists) {
+                  console.error(`File not found: ${file.file_name_id}`);
+                  return { ...file, signed_url: "File not found" };
+                }
+
+                const options = {
+                  version: "v4",
+                  action: "read",
+                  expires: Date.now() + 15 * 60 * 1000, // Berlaku 15 menit
+                };
+
+                const [signedUrl] = await storageFile.getSignedUrl(options);
+                return { ...file, signed_url: signedUrl };
+              } catch (error) {
+                console.error(
+                  `Error generating Signed URL for file: ${file.file_name_id}`,
+                  error
+                );
+                return { ...file, signed_url: "Error generating URL" };
+              }
+            } else {
+              return { ...file, signed_url: "No content" };
+            }
+          })
+        );
+
+        return { ...materi, files: updatedFiles };
+      })
+    );
+
+    return res.status(200).json(materiWithSignedUrl);
+  } catch (error) {
+    console.error("Error fetching learning materials:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+      serverMessage: error.message,
+    });
+  }
 };
+
   
 const getMateriByUserCourse = async (req, res) => {
   const { courseId } = req.params;
