@@ -2,10 +2,12 @@ const dbPool = require('../config/database');
 
 const getMentoringDataByUserId = async (userId) => {
     const SQLQuery = `
-    SELECT 
+    SELECT DISTINCT 
+        m.mentoring_id,
         ce.fasilitator_id AS mentor_id,
-        u.nama_lengkap AS nama_mentor,
-        cr.topik_id AS topik,
+        u.nama_lengkap AS nama_fasilitator,
+        cr.topik_id,
+        t.nama_topik,
         m.course_id,
         cr.nama_course,
         m.tipe_mentoring,
@@ -26,6 +28,8 @@ const getMentoringDataByUserId = async (userId) => {
         course_enrollment ce ON ce.course_id = m.course_id
     INNER JOIN 
         user u ON ce.fasilitator_id = u.user_id
+    INNER JOIN 
+        topik t ON cr.topik_id = t.topik_id
     WHERE 
         m.user_user_id = ?;
     `;
