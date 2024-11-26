@@ -10,7 +10,7 @@ router.post("/insert", MentoringController.postMentoring);
 
 router.patch("/insertFeedback/:mentoringId", MentoringController.postMentoringFeedback);
 
-router.get("/metode", MentoringController.getMetodeMentoring);
+router.get("/method", MentoringController.getMetodeMentoring);
 
 router.get("/type", MentoringController.getTypeMentoring);
 
