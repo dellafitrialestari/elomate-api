@@ -1,5 +1,15 @@
 require("dotenv").config();
 const PORT = process.env.PORT || 5000;
+
+// Set path ke file key.json secara eksplisit
+// process.env.GOOGLE_APPLICATION_CREDENTIALS = path.resolve(
+//   __dirname,
+//   "src/config/key.json"
+// );
+
+process.env.GOOGLE_APPLICATION_CREDENTIALS = "./src/config/key.json";
+
+
 const express = require("express");
 
 const usersRoutes = require("./routes/users");
@@ -11,6 +21,7 @@ const reportRoutes = require("./routes/report");
 const participantRoutes = require("./routes/participantData");
 const mentoringRoutes = require("./routes/mentoring");
 const assessmentRoutes = require("./routes/assessment");
+const filesRoutes = require("./routes/files");
 
 const middlewareLogRequest = require("./middleware/logs");
 const authenticateJWT = require("./middleware/auth");
@@ -44,6 +55,8 @@ app.use("/participantData", participantRoutes);
 app.use("/mentoring", mentoringRoutes);
 
 app.use("/assessment", assessmentRoutes);
+
+app.use("/files", filesRoutes);
 
 // app.post('/upload',upload.single('photo'),(req, res) => {
 //     res.json({

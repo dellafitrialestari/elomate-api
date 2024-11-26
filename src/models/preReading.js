@@ -7,6 +7,7 @@ const getMateriByUser = (userId) => {
         m.title_materi,
         m.description_materi,
         m.konten_materi,
+        f.file_name_id, -- Tambahkan kolom file_name_id
         m.category,
         c.course_id,
         c.nama_course,
@@ -15,6 +16,8 @@ const getMateriByUser = (userId) => {
         materi m
     JOIN 
         course c ON m.course_id = c.course_id
+    JOIN 
+        files f ON m.konten_materi = f.file_name_id
     JOIN 
         course_enrollment ce ON c.course_id = ce.course_id
     JOIN 
@@ -25,7 +28,8 @@ const getMateriByUser = (userId) => {
         u.user_id = ?;
     `;
     return dbPool.execute(SQLQuery, [userId]);
-}
+};
+
 
 const getMateriByUserCourse = (userId, courseId) => {
     const SQLQuery = `

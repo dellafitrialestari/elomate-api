@@ -53,13 +53,22 @@ const postMentoring = async (req, res) => {
     try {
         // Extract user ID from authenticated middleware
         const userId = req.user.userId; // Ensure middleware sets req.user.userId
-        
+
         // Extract data from request body
         const { nama_course, tanggal_mentoring, jam_mulai, jam_selesai, metode_mentoring, tipe_mentoring } = req.body;
 
         if (!nama_course || !tanggal_mentoring || !jam_mulai || !jam_selesai || !metode_mentoring || !tipe_mentoring) {
             return res.status(400).json({ message: "All fields are required" });
         }
+
+        // Convert tanggal_mentoring from DD-MM-YYYY to YYYY-MM-DD
+        const dateRegex = /^(\d{2})-(\d{2})-(\d{4})$/; // Regex for DD-MM-YYYY format
+        if (!dateRegex.test(tanggal_mentoring)) {
+            return res.status(400).json({ message: "Format tanggal mentoring harus DD-MM-YYYY" });
+        }
+
+        const [day, month, year] = tanggal_mentoring.split("-");
+        const formattedDate = `${year}-${month}-${day}`;
 
         // Validate format of jam_mulai and jam_selesai
         const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/; // Regex for HH:mm format
@@ -78,7 +87,7 @@ const postMentoring = async (req, res) => {
         await MentoringModel.postMentoring({
             userId,
             courseId,
-            tanggal_mentoring,
+            tanggal_mentoring: formattedDate, // Save formatted date
             jam_mulai,
             jam_selesai,
             metode_mentoring,
@@ -146,9 +155,7 @@ const getMetodeMentoring = async (req, res) => {
 
         const metodeMentoring = await MentoringModel.getMetodeMentoring();
 
-        return res.status(200).json({
-            metode_mentoring: metodeMentoring
-        });
+        return res.status(200).json(metodeMentoring);
     } catch (error) {
         console.error("Error fetching metode:", error);
         return res.status(500).json({
@@ -164,9 +171,11 @@ const getTypeMentoring = async (req, res) => {
 
         const tipeMentoring = await MentoringModel.getTypeMentoring();
 
-        return res.status(200).json({
-            tipe_mentoring: tipeMentoring
-        });
+        // return res.status(200).json({
+        //     tipe_mentoring: tipeMentoring
+        // });
+
+        return res.status(200).json(tipeMentoring);
     } catch (error) {
         console.error("Error fetching tipe_mentoring:", error);
         return res.status(500).json({
