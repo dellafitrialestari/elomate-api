@@ -3,11 +3,11 @@
 
 src/config/key.json
 
-*.log
-*.swp
-.DS_Store
-.idea/
-.vscode/
+# *.log
+# *.swp
+# .DS_Store
+# .idea/
+# .vscode/
 
-node_modules/
-dist/
+# node_modules/
+# dist/
