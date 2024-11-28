@@ -6,6 +6,8 @@ const router = express.Router();
 
 router.get('/mentoringData', MentoringController.getMentoringData);
 
+router.get("/category/:statusMentoring", MentoringController.getMentoringByStatus);
+
 router.get('/UpcomingData', MentoringController.getUpcomingData);
 
 router.get('/FeedbackData', MentoringController.getFeedbackData);

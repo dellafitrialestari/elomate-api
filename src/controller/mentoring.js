@@ -49,6 +49,59 @@ const getMentoringData = async (req, res) => {
     }
 };
 
+const getMentoringByStatus = async (req, res) => {
+
+    const { statusMentoring } = req.params;
+
+    try {
+        const userId = req.user.userId;
+
+        // Fetch mentoring data
+        const mentoringData = await MentoringModel.getMentoringByStatus(userId, statusMentoring);
+
+        if (!mentoringData || mentoringData.length === 0) {
+            return res.status(404).json({ message: "No mentoring data found" });
+        }
+
+        // Format tanggal tanpa mengubah zona waktu
+        const formatTanggal = (tanggal) => {
+            if (tanggal) {
+                const tanggalObj = new Date(tanggal);
+                const [year, month, day] = tanggalObj.toISOString().split("T")[0].split("-");
+                
+                // Nama bulan dalam bahasa Indonesia
+                const namaBulan = [
+                    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+                    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+                ];
+
+                return `${parseInt(day, 10)} ${namaBulan[parseInt(month, 10) - 1]} ${year}`;
+            }
+            return tanggal;
+        };
+      
+        const formattedData = mentoringData.map((item) => {
+            return Object.fromEntries(
+                Object.entries(item).map(([key, value]) => {
+                    if (key === "tanggal_mentoring") {
+                        return [key, formatTanggal(value)];
+                    }
+                    return [key, value !== null ? value : "-"];
+                })
+            );
+        });
+
+        return res.status(200).json(formattedData);
+    } catch (error) {
+        console.error("Error fetching mentoring data:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            serverMessage: error.message,
+        });
+    }
+};
+
+
 const getUpcomingData = async (req, res) => {
     try {
         const userId = req.user.userId;
@@ -370,6 +423,7 @@ const deleteMentoring = async (req, res) => {
 
 module.exports = {
     getMentoringData,
+    getMentoringByStatus,
     getUpcomingData,
     getFeedbackData,
     getApproveData,
