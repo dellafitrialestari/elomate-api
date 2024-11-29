@@ -6,8 +6,14 @@ const router = express.Router();
 
 router.get("/", AssessmentController.getAssessmentData); 
 
-router.get("/:phase/:topic", AssessmentController.getAssessmentByPhaseTopic);
+router.get("/question/:assessmentId", AssessmentController.getQuestionByAssessmentId); 
 
-router.get("/:phase/:topic/:categoryAssessment", AssessmentController.getAssessmentByPhaseTopicCategory);
+router.get("/selfAssessment", AssessmentController.getSelfAssessment); 
 
-module.exports = router;
+router.get("/peerAssessment", AssessmentController.getPeerAssessment); 
+
+// router.get("/:phase/:topic", AssessmentController.getAssessmentByPhaseTopic);
+
+// router.get("/:phase/:topic/:categoryAssessment", AssessmentController.getAssessmentByPhaseTopicCategory);
+
+module.exports = router; 
