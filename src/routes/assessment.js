@@ -12,6 +12,8 @@ router.get("/selfAssessment", AssessmentController.getSelfAssessment);
 
 router.get("/peerAssessment", AssessmentController.getPeerAssessment); 
 
+router.get("/statusPeerParticipant/:assessmentId", AssessmentController.getStatusPeerParticipant);
+
 // router.get("/:phase/:topic", AssessmentController.getAssessmentByPhaseTopic);
 
 // router.get("/:phase/:topic/:categoryAssessment", AssessmentController.getAssessmentByPhaseTopicCategory);

@@ -204,6 +204,73 @@ const getPeerAssessment = async (req, res) => {
     }
 };
 
+const getStatusPeerParticipant = async (req, res) => {
+    const { assessmentId } = req.params;
+
+    try {
+        const userId = req.user.userId;
+
+        console.log("Received parameters:", { assessmentId, userId });
+
+        // kategori assessment
+        const assessmentData = await AssessmentModel.getCategoryByAssessmentId(assessmentId);
+
+        if (!assessmentData) {
+            return res.status(404).json({
+                message: `Assessment with ID ${assessmentId} not found.`
+            });
+        }
+
+        // Validasi kategori assessment
+        const categoryAssessment = assessmentData.category_assessment;
+        if (categoryAssessment !== "Peer Assessment") {
+            return res.status(400).json({
+                message: `Assessment with ID ${assessmentId} is not categorized as Peer Assessment.`
+            });
+        }
+
+        // all participant
+        const [participants] = await AssessmentModel.getStatusPeerParticipant(assessmentId, userId);
+
+        if (!participants || participants.length === 0) {
+            return res.status(404).json({
+                message: "No participants found for this assessment"
+            });
+        }
+
+        // Format data peserta
+        const formattedData = {
+            assessment_id: assessmentId,
+            assessment_title: participants[0]?.assessment_title || "N/A",
+            data: participants.map((participant) => ({
+                user_id: participant.user_id,
+                nama_lengkap: participant.nama_lengkap,
+                role_name: participant.role_name,
+                batch_name: participant.batch_name,
+                nrp: participant.nrp,
+                email: participant.email,
+                posisi: participant.posisi,
+                // asal_universitas: participant.asal_universitas,
+                // jurusan: participant.jurusan,
+                // tempat_lahir: participant.tempat_lahir,
+                // tanggal_lahir: participant.tanggal_lahir,
+                // domisili: participant.domisili,
+                // no_hp: participant.no_hp,
+                status_peer_assessment: participant.status_peer_assessment || "Incomplete",
+            })),
+        };
+
+        return res.status(200).json(formattedData);
+    } catch (error) {
+        console.error("Error fetching participants:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            serverMessage: error.message,
+        });
+    }
+};
+
+
 // const getAssessmentByPhaseTopic = async (req, res) => {
 
 //     const { phase, topic } = req.params;
@@ -334,6 +401,7 @@ module.exports = {
     getQuestionByAssessmentId,
     getSelfAssessment,
     getPeerAssessment,
+    getStatusPeerParticipant,
     // getAssessmentByPhaseTopic,
     // getAssessmentByPhaseTopicCategory,
 };
