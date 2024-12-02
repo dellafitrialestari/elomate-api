@@ -31,10 +31,53 @@ const getMentoringDataByUserId = async (userId) => {
     INNER JOIN 
         topik t ON cr.topik_id = t.topik_id
     WHERE 
-        m.user_user_id = ?;
+        m.user_user_id = ?
+    ORDER BY 
+        m.tanggal_mentoring ASC, m.jam_mulai ASC;
     `;
 
     const [rows] = await dbPool.execute(SQLQuery, [userId]);
+    return rows;
+};
+
+const getMentoringById = async (userId, mentoringId) => {
+    const SQLQuery = `
+    SELECT DISTINCT 
+        m.mentoring_id,
+        ce.fasilitator_id AS mentor_id,
+        u.nama_lengkap AS nama_fasilitator,
+        cr.topik_id,
+        t.nama_topik,
+        m.course_id,
+        cr.nama_course,
+        m.tipe_mentoring,
+        m.metode_mentoring,
+        m.tanggal_mentoring,
+        m.jam_mulai,
+        m.jam_selesai,
+        CONCAT(m.jam_mulai, ' - ', m.jam_selesai) AS waktu_mentoring,
+        cr.nama_course AS kompetensi_yang_dievaluasi,
+        m.lesson_learned_competencies,
+        m.catatan_mentor,
+        m.status
+    FROM 
+        mentoring m
+    INNER JOIN 
+        course cr ON m.course_id = cr.course_id
+    INNER JOIN 
+        course_enrollment ce ON ce.course_id = m.course_id
+    INNER JOIN 
+        user u ON ce.fasilitator_id = u.user_id
+    INNER JOIN 
+        topik t ON cr.topik_id = t.topik_id
+    WHERE 
+        m.user_user_id = ?
+        AND m.mentoring_id = ?
+    ORDER BY 
+        m.tanggal_mentoring ASC, m.jam_mulai ASC;
+    `;
+
+    const [rows] = await dbPool.execute(SQLQuery, [userId, mentoringId]);
     return rows;
 };
 
@@ -70,7 +113,9 @@ const getUpcomingData = async (userId) => {
         topik t ON cr.topik_id = t.topik_id
     WHERE 
         m.user_user_id = ?
-        AND m.status = "Processing";
+        AND m.status = "Processing"
+    ORDER BY 
+        m.tanggal_mentoring ASC, m.jam_mulai ASC;
     `;
 
     const [rows] = await dbPool.execute(SQLQuery, [userId]);
@@ -109,7 +154,9 @@ const getMentoringByStatus = async (userId, statusMentoring) => {
         topik t ON cr.topik_id = t.topik_id
     WHERE 
         m.user_user_id = ?
-        AND m.status = ?;
+        AND m.status = ?
+    ORDER BY 
+        m.tanggal_mentoring ASC, m.jam_mulai ASC;
     `;
 
     const [rows] = await dbPool.execute(SQLQuery, [userId, statusMentoring]);
@@ -148,7 +195,9 @@ const getFeedbackData = async (userId) => {
         topik t ON cr.topik_id = t.topik_id
     WHERE 
         m.user_user_id = ?
-        AND m.status = "Need Revision";
+        AND m.status = "Need Revision"
+    ORDER BY 
+        m.tanggal_mentoring ASC, m.jam_mulai ASC;
     `;
 
     const [rows] = await dbPool.execute(SQLQuery, [userId]);
@@ -187,7 +236,9 @@ const getApproveData = async (userId) => {
         topik t ON cr.topik_id = t.topik_id
     WHERE 
         m.user_user_id = ?
-        AND m.status = "Approve";
+        AND m.status = "Approve"
+    ORDER BY 
+        m.tanggal_mentoring ASC, m.jam_mulai ASC;
     `;
 
     const [rows] = await dbPool.execute(SQLQuery, [userId]);
@@ -269,6 +320,7 @@ const deleteMentoring = (mentoringId, userId) => {
 
 module.exports = {
     getMentoringDataByUserId,
+    getMentoringById,
     getMentoringByStatus,
     getUpcomingData,
     getFeedbackData,
