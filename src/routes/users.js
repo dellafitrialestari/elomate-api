@@ -33,4 +33,8 @@ router.get("/", UserController.getAllUsers);
 // DELETE - DELETE
 router.delete("/:idUser", UserController.deleteUser);
 
+router.get("/me/education", UserController.getEducationUser);
+
+router.patch("/me/education/:educationId", UserController.updateEducationUser);
+
 module.exports = router;

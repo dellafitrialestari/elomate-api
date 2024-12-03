@@ -118,6 +118,35 @@ const getCurrentUser = async (req, res) => {
   }
 };
 
+const getEducationUser = async (req, res) => {
+
+  try {
+      const userId = req.user.userId; // Ensure userId is extracted via middleware authentication
+      
+      // Fetch courses based on user ID
+      const [courses] = await UsersModel.getEducationUser(userId);
+      
+      if (!courses || courses.length === 0) {
+          return res.status(404).json({
+              message: "No courses found for this user",
+              data: null,
+          });
+      }
+
+      // Return all courses related to the user
+      // return res.status(200).json({ courses });
+
+      // Return the array directly without wrapping in an object
+      return res.status(200).json(courses);
+  } catch (error) {
+      console.error("Error fetching courses:", error);
+      return res.status(500).json({
+          message: "Internal server error",
+          serverMessage: error.message,
+      });
+  }
+};
+
 const getAllUsers = async (req, res) => {
   try {
     const [data] = await UsersModel.getAllUsers();
@@ -146,10 +175,15 @@ const getUserById = async (req, res) => {
       });
     }
 
-    res.json({
-      message: "GET user by ID success",
-      data: data[0],
-    });
+    // Format tanggal_lahir tanpa mengubah zona waktu
+    const userData = data[0];
+    if (userData.tanggal_lahir) {
+      const tanggalLahir = new Date(userData.tanggal_lahir);
+      const [year, month, day] = tanggalLahir.toISOString().split("T")[0].split("-");
+      userData.tanggal_lahir = `${day}-${month}-${year}`;
+    }
+
+    res.json(userData);
   } catch (error) {
     res.status(500).json({
       message: "Server Error",
@@ -170,10 +204,15 @@ const getUserByNrp = async (req, res) => {
       });
     }
 
-    res.json({
-      message: "GET user by NRP success",
-      data: data[0],
-    });
+    // Format tanggal_lahir tanpa mengubah zona waktu
+    const userData = data[0];
+    if (userData.tanggal_lahir) {
+      const tanggalLahir = new Date(userData.tanggal_lahir);
+      const [year, month, day] = tanggalLahir.toISOString().split("T")[0].split("-");
+      userData.tanggal_lahir = `${day}-${month}-${year}`;
+    }
+
+    res.json(userData);
   } catch (error) {
     res.status(500).json({
       message: "Server Error",
@@ -302,6 +341,60 @@ const updateUser = async (req, res) => {
   }
 };
 
+const updateEducationUser = async (req, res) => {
+  const {
+      tahun_lulus,
+      jenjang_studi,
+      universitas,
+      jurusan
+  } = req.body;
+
+  const { educationId } = req.params;
+
+  if (
+      !tahun_lulus ||
+      !jenjang_studi ||
+      !universitas ||
+      !jurusan ||
+      !educationId
+  ) {
+      return res.status(400).json({
+          message: "All fields are required",
+      });
+  }
+
+  try {
+      // userId dari middleware auth
+      const userId = req.user.userId;
+
+      const result = await UsersModel.updateEducationUser(
+          {
+              tahun_lulus,
+              jenjang_studi,
+              universitas,
+              jurusan,
+          },
+          userId,
+          educationId
+      );
+
+      if (result.affectedRows === 0) {
+          return res.status(404).json({
+              message: "No matching education record found for this user",
+          });
+      }
+
+      return res.json({
+          message: "User education updated successfully",
+      });
+  } catch (error) {
+      console.error("Error updating user education:", error.message);
+      return res.status(500).json({
+          message: "Server Error",
+          serverMessage: error.message,
+      });
+  }
+};
 
 const deleteUser = async (req, res) => {
   const { idUser } = req.params;
@@ -381,12 +474,14 @@ const updatePassword = async (req, res) => {
 module.exports = {
   loginUser,
   getCurrentUser,
+  getEducationUser,
   getAllUsers,
   getUserById,
   getUserByNrp,
   getUserByEmail,
   createNewUser,
   updateUser,
+  updateEducationUser,
   deleteUser,
   updatePassword,
 };

@@ -24,10 +24,10 @@ const getUserById = (idUser) => {
           user.nrp,
           user.email,
           user.posisi,
-          user.asal_universitas,
-          user.jurusan,
-          user.tahun_lulus,
-          user.jenjang_studi,
+          -- user.asal_universitas,
+          -- user.jurusan,
+          -- user.tahun_lulus,
+          -- user.jenjang_studi,
           user.tempat_lahir,
           user.tanggal_lahir,
           user.domisili,
@@ -49,8 +49,59 @@ const getUserById = (idUser) => {
     return dbPool.execute(SQLQuery, [idUser]);
 };
 
+
+const getEducationUser = (idUser) => {
+    const SQLQuery = `
+    SELECT 
+        user_education.id_education,
+        user.user_id,
+        user.nama_lengkap,
+        user_education.jenjang_studi,
+        user_education.universitas,
+        user_education.jurusan,
+        user_education.tahun_lulus
+    FROM 
+        user_education
+    LEFT JOIN 
+        user ON user_education.user_id = user.user_id
+    WHERE 
+        user.user_id = ?;
+    `;
+  
+    return dbPool.execute(SQLQuery, [idUser]);
+};
+
 const getUserByNrp = (nrpUser) => {
-    const SQLQuery = `SELECT * FROM user WHERE nrp=${nrpUser}`;
+    const SQLQuery = `
+    SELECT 
+          user.user_id,
+          user.nama_lengkap,
+          role.role_name,
+          batch_data.batch_name,
+          user.nrp,
+          user.email,
+          user.posisi,
+          -- user.asal_universitas,
+          -- user.jurusan,
+          -- user.tahun_lulus,
+          -- user.jenjang_studi,
+          user.tempat_lahir,
+          user.tanggal_lahir,
+          user.domisili,
+          user.no_hp
+      FROM 
+          user
+      LEFT JOIN 
+          role ON user.role_id = role.role_id
+      LEFT JOIN 
+          course_enrollment ON user.user_id = course_enrollment.user_user_id
+      LEFT JOIN 
+          course ON course_enrollment.course_id = course.course_id
+      LEFT JOIN 
+          batch_data ON user.batch_data_batch_id = batch_data.batch_id
+      WHERE 
+          user.nrp=${nrpUser};
+    `;
     return dbPool.execute(SQLQuery);
 }
 
@@ -75,6 +126,24 @@ const updateUser = (body, idUser) => {
     const values = [body.asal_universitas, body.jurusan, body.tempat_lahir, body.tanggal_lahir, body.domisili, body.no_hp, body.tahun_lulus, body.jenjang_studi, idUser];
 
     return dbPool.execute(SQLQuery, values);
+}
+
+const updateEducationUser = async (body, idUser, educationId) => {
+    const SQLQuery = `UPDATE user_education 
+                      SET tahun_lulus = ?, jenjang_studi = ?, universitas = ?, jurusan = ? 
+                      WHERE user_id = ? AND id_education = ?`;
+    const values = [
+        body.tahun_lulus,
+        body.jenjang_studi,
+        body.universitas,
+        body.jurusan,
+        idUser,
+        educationId,
+    ];
+
+    const [result] = await dbPool.execute(SQLQuery, values);
+
+    return result;
 }
 
 const updatePassword = (hashedPassword, userId) => {
@@ -108,11 +177,13 @@ module.exports = {
     verifyUser,
     getAllUsers,
     getUserById,
+    getEducationUser,
     getUserByNrp,
     getUserByEmail,
     createNewUser,
     updateUser,
     deleteUser,
     updatePassword,
+    updateEducationUser,
     getPasswordById,
 }
