@@ -8,7 +8,7 @@ router.get("/", AssessmentController.getAssessmentData);
 
 router.get("/question/:assessmentId", AssessmentController.getQuestionByAssessmentId); 
 
-router.post("/questionScore/:assessmentId", AssessmentController.insertScoreAssessment); 
+router.post("/questionScore/:assessmentId", AssessmentController.insertScoreAssessment);
 
 router.get("/selfAssessment", AssessmentController.getSelfAssessment); 
 

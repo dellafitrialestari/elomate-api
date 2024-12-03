@@ -272,9 +272,8 @@ const getStatusPeerParticipant = async (req, res) => {
 
 const insertScoreAssessment = async (req, res) => {
     try {
-        const userId = req.user.userId; // get userId dari req
-        const assessmentId = req.params.assessmentId;
-        const responses = req.body; // get body request
+        const userId = req.user.userId; // Mendapatkan userId dari middleware
+        const responses = req.body;
 
         // Mapping Likert -> skor numerik
         const likertMapping = {
@@ -285,12 +284,15 @@ const insertScoreAssessment = async (req, res) => {
             "5 - Sangat Baik": 5,
         };
 
-        const scores = responses.map(response => ({
+        // Konversi jawaban -> skor
+        const scores = responses.map((response) => ({
             question_id: response.question_id,
+            answer_likert: response.answer_likert,
             score: likertMapping[response.answer_likert], // Konversi jawaban Likert ke skor
         }));
 
-        await AssessmentModel.insertScoreAssessment(userId, assessmentId, scores);
+        // Insert
+        await AssessmentModel.insertScoreAssessment(userId, scores);
 
         return res.status(201).json({ message: "Scores inserted successfully" });
     } catch (error) {

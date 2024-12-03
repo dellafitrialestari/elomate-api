@@ -170,26 +170,44 @@ const getCategoryByAssessmentId = async (assessmentId) => {
     return rows.length > 0 ? rows[0] : null;
 };
 
-const insertScoreAssessment = async (userId, assessmentId, scores) => {
+const insertScoreAssessment = async (userId, scores) => {
     try {
-        const values = scores.map(score => [
+        // Siapkan data untuk dimasukkan
+        const values = scores.map((score) => [
             userId,
-            assessmentId,
             score.question_id,
+            score.answer_likert,
             score.score,
         ]);
 
         const query = `
-            INSERT INTO answers_assessment (user_user_id, question_assessment_question_id, score)
-            VALUES ?;        
+            INSERT INTO answers_assessment (user_user_id, question_assessment_question_id, answer_likert, score)
+            VALUES ?
+            ON DUPLICATE KEY UPDATE 
+                answer_likert = VALUES(answer_likert), 
+                score = VALUES(score); -- Jika sudah ada, perbarui nilai
         `;
 
         await dbPool.query(query, [values]);
     } catch (error) {
+        console.error(error);
         throw new Error("Failed to insert scores into the database");
     }
 };
-
+ 
+const getValidQuestionIds = async (assessmentId, questionIds) => {
+    try {
+        const query = `
+            SELECT question_id 
+            FROM question_assessment 
+            WHERE assessment_id = ? AND question_id IN (?);
+        `;
+        const [rows] = await dbPool.query(query, [assessmentId, questionIds]);
+        return rows.map((row) => row.question_id);
+    } catch (error) {
+        throw new Error("Failed to fetch valid question IDs");
+    }
+};
 
 
 // const getAssessmentByPhaseTopic = async (userId, phase, topic) => {
@@ -265,6 +283,7 @@ module.exports = {
     getStatusPeerParticipant,
     getCategoryByAssessmentId,
     insertScoreAssessment,
+    getValidQuestionIds,
     // getAssessmentByPhaseTopic,
     // getAssessmentByPhaseTopicCategory,
 };
