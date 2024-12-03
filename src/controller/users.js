@@ -280,26 +280,18 @@ const createNewUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
   const {
-      asal_universitas,
-      jurusan,
       tempat_lahir,
       tanggal_lahir,
       domisili,
       no_hp,
-      tahun_lulus,
-      jenjang_studi,
   } = req.body;
 
   // Validasi input
   if (
-      !asal_universitas ||
-      !jurusan ||
       !tempat_lahir ||
       !tanggal_lahir ||
       !domisili ||
-      !no_hp ||
-      !tahun_lulus ||
-      !jenjang_studi
+      !no_hp 
   ) {
       return res.status(400).json({
           message: "All fields are required",
@@ -317,14 +309,10 @@ const updateUser = async (req, res) => {
       // Panggil model untuk update data
       await UsersModel.updateUser(
           {
-              asal_universitas,
-              jurusan,
               tempat_lahir,
               tanggal_lahir: formattedDate,
               domisili,
               no_hp,
-              tahun_lulus,
-              jenjang_studi,
           },
           userId
       );
