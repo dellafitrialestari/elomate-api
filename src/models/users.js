@@ -172,6 +172,21 @@ const getPasswordById = async (userId) => {
     return dbPool.execute(SQLQuery, [userId]);
 };
 
+const insertEducationUser = (body) => {
+    const SQLQuery = `
+        INSERT INTO 
+            user_education (user_id, tahun_lulus, jenjang_studi, universitas, jurusan) 
+        VALUES (?, ?, ?, ?, ?)
+    `;
+    const values = [body.user_id, body.tahun_lulus, body.jenjang_studi, body.universitas, body.jurusan];
+
+    return dbPool.execute(SQLQuery, values);
+};
+
+const deleteEducationUser = (userId, educationId) => {
+    const SQLQuery = `DELETE FROM user_education WHERE user_id = ? AND id_education = ?`;
+    return dbPool.execute(SQLQuery, [userId, educationId]);
+}
 
 module.exports = {
     verifyUser,
@@ -186,4 +201,6 @@ module.exports = {
     updatePassword,
     updateEducationUser,
     getPasswordById,
+    insertEducationUser,
+    deleteEducationUser,
 }

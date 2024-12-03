@@ -457,6 +457,55 @@ const updatePassword = async (req, res) => {
     }
 };
 
+const insertEducationUser = async (req, res) => {
+  const { body } = req;
+
+  if (!body.tahun_lulus || !body.jenjang_studi || !body.universitas || !body.jurusan) {
+    return res.status(400).json({
+      message: "Incomplete data: graduation year, level of study, university, and major are required.",
+      data: null,
+    });
+  }
+
+  try {
+    // userId dari middleware auth
+    const userId = req.user.userId;
+
+    // userId ke data
+    const newEducation = { ...body, user_id: userId };
+
+    // Insert
+    await UsersModel.insertEducationUser(newEducation);
+
+    res.status(201).json({
+      message: "Insert user education success"
+    });
+  } catch (error) {
+    console.error("Error inserting user education:", error.message);
+    res.status(500).json({
+      message: "Server Error",
+      serverMessage: error.message,
+    });
+  }
+};
+
+const deleteEducationUser = async (req, res) => {
+  const { educationId } = req.params;
+
+  try {
+    const userId = req.user.userId;
+
+    await UsersModel.deleteEducationUser(userId, educationId);
+    res.json({
+      message: "DELETE user success",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Server Error",
+      serverMessage: error,
+    });
+  }
+};
 
 
 module.exports = {
@@ -472,4 +521,6 @@ module.exports = {
   updateEducationUser,
   deleteUser,
   updatePassword,
+  insertEducationUser,
+  deleteEducationUser,
 };

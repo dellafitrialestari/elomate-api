@@ -37,4 +37,8 @@ router.get("/me/education", UserController.getEducationUser);
 
 router.patch("/me/education/:educationId", UserController.updateEducationUser);
 
+router.post("/me/education", UserController.insertEducationUser);
+
+router.delete("/me/education/:educationId", UserController.deleteEducationUser);
+
 module.exports = router;

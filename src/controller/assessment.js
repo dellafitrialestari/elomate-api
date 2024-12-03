@@ -270,6 +270,34 @@ const getStatusPeerParticipant = async (req, res) => {
     }
 };
 
+const insertScoreAssessment = async (req, res) => {
+    try {
+        const userId = req.user.userId; // get userId dari req
+        const assessmentId = req.params.assessmentId;
+        const responses = req.body; // get body request
+
+        // Mapping Likert -> skor numerik
+        const likertMapping = {
+            "1 - Sangat Kurang Baik": 1,
+            "2 - Kurang Baik": 2,
+            "3 - Cukup Baik": 3,
+            "4 - Baik": 4,
+            "5 - Sangat Baik": 5,
+        };
+
+        const scores = responses.map(response => ({
+            question_id: response.question_id,
+            score: likertMapping[response.answer_likert], // Konversi jawaban Likert ke skor
+        }));
+
+        await AssessmentModel.insertScoreAssessment(userId, assessmentId, scores);
+
+        return res.status(201).json({ message: "Scores inserted successfully" });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
 
 // const getAssessmentByPhaseTopic = async (req, res) => {
 
@@ -402,6 +430,7 @@ module.exports = {
     getSelfAssessment,
     getPeerAssessment,
     getStatusPeerParticipant,
+    insertScoreAssessment,
     // getAssessmentByPhaseTopic,
     // getAssessmentByPhaseTopicCategory,
 };

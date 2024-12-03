@@ -48,12 +48,12 @@ const getQuestionByAssessmentId = async (assessmentId) => {
 const getSelfAssessment = async (userId) => {
     const SQLQuery = `
     SELECT 
-        u.user_id,
-        u.nama_lengkap,
+        -- u.user_id,
+        -- u.nama_lengkap,
         a.assessment_id,
         a.title,
         a.description,
-        a.category_assessment,
+        -- a.category_assessment,
         a.tanggal_mulai,
         a.tanggal_selesai,
         COALESCE(ae.status, 'Incomplete') AS status
@@ -76,12 +76,12 @@ const getSelfAssessment = async (userId) => {
 const getPeerAssessment = async (userId) => {
     const SQLQuery = `
     SELECT 
-        u.user_id,
-        u.nama_lengkap,
+        -- u.user_id,
+        -- u.nama_lengkap,
         a.assessment_id,
         a.title,
         a.description,
-        a.category_assessment,
+        -- a.category_assessment,
         a.tanggal_mulai,
         a.tanggal_selesai,
         COALESCE(ae.status, 'Incomplete') AS status
@@ -170,6 +170,27 @@ const getCategoryByAssessmentId = async (assessmentId) => {
     return rows.length > 0 ? rows[0] : null;
 };
 
+const insertScoreAssessment = async (userId, assessmentId, scores) => {
+    try {
+        const values = scores.map(score => [
+            userId,
+            assessmentId,
+            score.question_id,
+            score.score,
+        ]);
+
+        const query = `
+            INSERT INTO answers_assessment (user_user_id, question_assessment_question_id, score)
+            VALUES ?;        
+        `;
+
+        await dbPool.query(query, [values]);
+    } catch (error) {
+        throw new Error("Failed to insert scores into the database");
+    }
+};
+
+
 
 // const getAssessmentByPhaseTopic = async (userId, phase, topic) => {
 //     const SQLQuery = `
@@ -243,6 +264,7 @@ module.exports = {
     getPeerAssessment,
     getStatusPeerParticipant,
     getCategoryByAssessmentId,
+    insertScoreAssessment,
     // getAssessmentByPhaseTopic,
     // getAssessmentByPhaseTopicCategory,
 };
