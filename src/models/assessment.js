@@ -172,7 +172,6 @@ const getCategoryByAssessmentId = async (assessmentId) => {
 
 const insertScoreAssessment = async (userId, scores) => {
     try {
-        // Siapkan data untuk dimasukkan
         const values = scores.map((score) => [
             userId,
             score.question_id,
@@ -209,71 +208,50 @@ const getValidQuestionIds = async (assessmentId, questionIds) => {
     }
 };
 
+const checkAllQuestionsAnswered = async (assessmentId, userId) => {
+    try {
+        // total pertanyaan for assessment tertentu
+        const queryTotal = `
+            SELECT COUNT(*) AS total_questions
+            FROM question_assessment
+            WHERE assessment_id = ?;
+        `;
+        const [total] = await dbPool.query(queryTotal, [assessmentId]);
 
-// const getAssessmentByPhaseTopic = async (userId, phase, topic) => {
-//     const SQLQuery = `
-//     SELECT 
-//         a.assessment_id,
-//         a.category_assessment AS category,
-//         a.topik_id,
-//         t.nama_topik AS nama_topik,
-//         p.phase_id,
-//         p.nama_phase AS nama_phase,
-//         a.title,
-//         a.user_user_id AS user_id,
-//         u.nama_lengkap AS nama_user,
-//         a.description,
-//         a.tanggal_mulai,
-//         a.tanggal_selesai,
-//         a.active AS status
-//     FROM 
-//         assessment a
-//     JOIN 
-//         user u ON a.user_user_id = u.user_id
-//     JOIN 
-//         topik t ON a.topik_id = t.topik_id
-//     JOIN 
-//         phase p ON t.phase_id = p.phase_id
-//     WHERE 
-//         a.user_user_id = ?
-//         AND t.phase_id = ?
-//         AND t.topik_id = ?;
-//     `;
-//     return dbPool.execute(SQLQuery, [userId, phase, topic]);
-// }; 
+        // total pertanyaan yang sudah dijawab
+        const queryAnswered = `
+            SELECT COUNT(DISTINCT question_assessment_question_id) AS answered_questions
+            FROM answers_assessment
+            WHERE user_user_id = ? AND question_assessment_question_id IN (
+                SELECT question_id
+                FROM question_assessment
+                WHERE assessment_id = ?
+            );
+        `;
+        const [answered] = await dbPool.query(queryAnswered, [userId, assessmentId]);
 
-// const getAssessmentByPhaseTopicCategory = async (userId, phase, topic, categoryAssessment) => {
-//     const SQLQuery = `
-//     SELECT 
-//         a.assessment_id,
-//         a.category_assessment AS category,
-//         a.topik_id,
-//         t.nama_topik AS nama_topik,
-//         p.phase_id,
-//         p.nama_phase AS nama_phase,
-//         a.title,
-//         a.user_user_id AS user_id,
-//         u.nama_lengkap AS nama_user,
-//         a.description,
-//         a.tanggal_mulai,
-//         a.tanggal_selesai,
-//         a.active AS status
-//     FROM 
-//         assessment a
-//     JOIN 
-//         user u ON a.user_user_id = u.user_id
-//     JOIN 
-//         topik t ON a.topik_id = t.topik_id
-//     JOIN 
-//         phase p ON t.phase_id = p.phase_id
-//     WHERE 
-//         a.user_user_id = ?
-//         AND t.phase_id = ?
-//         AND t.topik_id = ?
-//         AND a.category_assessment = ?;
-//     `;
-//     return dbPool.execute(SQLQuery, [userId, phase, topic, categoryAssessment]);
-// };
+        return total[0].total_questions === answered[0].answered_questions;
+    } catch (error) {
+        console.error(error);
+        throw new Error("Failed to check if all questions were answered");
+    }
+};
+
+const updateAssessmentEnrollmentStatus = async (assessmentId, userId, status) => {
+    try {
+        const query = `
+            INSERT INTO assessment_enrollment (assessment_id, user_user_id, status)
+            VALUES (?, ?, ?)
+            ON DUPLICATE KEY UPDATE 
+                status = VALUES(status);
+        `;
+        await dbPool.query(query, [assessmentId, userId, status]);
+    } catch (error) {
+        console.error(error);
+        throw new Error("Failed to update assessment enrollment status");
+    }
+};
+
 
 module.exports = {
     getAssessmentData,
@@ -284,6 +262,6 @@ module.exports = {
     getCategoryByAssessmentId,
     insertScoreAssessment,
     getValidQuestionIds,
-    // getAssessmentByPhaseTopic,
-    // getAssessmentByPhaseTopicCategory,
+    checkAllQuestionsAnswered,
+    updateAssessmentEnrollmentStatus,
 };
