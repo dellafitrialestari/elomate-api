@@ -8,16 +8,19 @@ router.get("/", AssessmentController.getAssessmentData);
 
 router.get("/question/:assessmentId", AssessmentController.getQuestionByAssessmentId); 
 
-router.post("/questionScore/:assessmentId", AssessmentController.insertScoreAssessment);
+// Self Assessment
 
 router.get("/selfAssessment", AssessmentController.getSelfAssessment); 
 
+router.post("/selfAssessment/:assessmentId", AssessmentController.submitSelfAssessment);
+
+// Peer Asssessment
+
 router.get("/peerAssessment", AssessmentController.getPeerAssessment); 
+
+router.post("/peerAssessment/:assessmentId/:assessedId", AssessmentController.submitPeerAssessment);
 
 router.get("/statusPeerParticipant/:assessmentId", AssessmentController.getStatusPeerParticipant);
 
-// router.get("/:phase/:topic", AssessmentController.getAssessmentByPhaseTopic);
-
-// router.get("/:phase/:topic/:categoryAssessment", AssessmentController.getAssessmentByPhaseTopicCategory);
 
 module.exports = router; 

@@ -1,5 +1,6 @@
 const dbPool = require('../config/database');
 
+
 const getAssessmentData = async (userId) => {
     const SQLQuery = `
     SELECT 
@@ -112,17 +113,7 @@ const getStatusPeerParticipant = async (assessmentId, userId) => {
         b.batch_name,
         u.nrp,
         u.email,
-        u.posisi,
-        -- u.asal_universitas,
-        -- u.jurusan,
-        -- u.tempat_lahir,
-        -- u.tanggal_lahir,
-        -- u.domisili,
-        -- u.no_hp,
-        CASE 
-            WHEN ae.user_user_id IS NULL THEN 'Incomplete'
-            ELSE ae.status
-        END AS status_peer_assessment
+        u.posisi
     FROM 
         user u
     JOIN 
@@ -131,8 +122,6 @@ const getStatusPeerParticipant = async (assessmentId, userId) => {
         batch_data b ON u.batch_data_batch_id = b.batch_id
     JOIN 
         assessment a ON a.assessment_id = ? AND a.category_assessment = 'Peer Assessment'
-    LEFT JOIN 
-        assessment_enrollment ae ON ae.assessment_id = a.assessment_id AND ae.user_user_id = u.user_id
     WHERE 
         u.batch_data_batch_id = (
             SELECT batch_data_batch_id
@@ -145,19 +134,21 @@ const getStatusPeerParticipant = async (assessmentId, userId) => {
             FROM user
             WHERE user_id = ?
         )
-    -- AND 
-        -- c.course_id IN (
-            -- SELECT course_id
-            -- FROM course_enrollment
-            -- WHERE user_user_id = ?
-        -- )
-    ;
+    AND 
+        u.user_id != ?; -- Exclude the current user
     `;
-    return dbPool.execute(SQLQuery, [assessmentId, userId, userId]);
-    // console.log("Executing SQL with parameters:", assessmentId, userId);
-    // const [result] = await dbPool.execute(SQLQuery, [assessmentId, userId, userId]);
-    // console.log("Query result:", result);
-    // return result;
+    return dbPool.execute(SQLQuery, [assessmentId, userId, userId, userId]);
+};
+
+const checkIfAssessed = async (assessmentId, assessorId, assessedId) => {
+    const SQLQuery = `
+    SELECT 1
+    FROM assessment_peer_answer
+    WHERE assessment_id = ? AND assessor_id = ? AND assessed_id = ?
+    LIMIT 1;
+    `;
+    const [rows] = await dbPool.execute(SQLQuery, [assessmentId, assessorId, assessedId]);
+    return rows.length > 0;
 };
 
 const getCategoryByAssessmentId = async (assessmentId) => {
@@ -170,7 +161,7 @@ const getCategoryByAssessmentId = async (assessmentId) => {
     return rows.length > 0 ? rows[0] : null;
 };
 
-const insertScoreAssessment = async (userId, scores) => {
+const submitSelfAssessment = async (userId, scores) => {
     try {
         const values = scores.map((score) => [
             userId,
@@ -180,7 +171,7 @@ const insertScoreAssessment = async (userId, scores) => {
         ]);
 
         const query = `
-            INSERT INTO answers_assessment (user_user_id, question_assessment_question_id, answer_likert, score)
+            INSERT INTO assessment_self_answer (user_user_id, question_assessment_question_id, answer_likert, score)
             VALUES ?
             ON DUPLICATE KEY UPDATE 
                 answer_likert = VALUES(answer_likert), 
@@ -221,7 +212,7 @@ const checkAllQuestionsAnswered = async (assessmentId, userId) => {
         // total pertanyaan yang sudah dijawab
         const queryAnswered = `
             SELECT COUNT(DISTINCT question_assessment_question_id) AS answered_questions
-            FROM answers_assessment
+            FROM assessment_self_answer
             WHERE user_user_id = ? AND question_assessment_question_id IN (
                 SELECT question_id
                 FROM question_assessment
@@ -252,6 +243,37 @@ const updateAssessmentEnrollmentStatus = async (assessmentId, userId, status) =>
     }
 };
 
+const insertPeerScores = async (assessmentId, scores) => {
+    const values = scores.map(score => [
+        assessmentId,
+        score.assessor_id,
+        score.assessed_id,
+        score.question_id,
+        score.answer_likert,
+        score.score,
+    ]);
+
+    const query = `
+        INSERT INTO assessment_peer_answer (assessment_id, assessor_id, assessed_id, question_id, answer_likert, score)
+        VALUES ?
+        ON DUPLICATE KEY UPDATE 
+            answer_likert = VALUES(answer_likert),
+            score = VALUES(score);
+    `;
+
+    return dbPool.query(query, [values]);
+};
+
+const getAssessmentById = async (assessmentId) => {
+    const query = `
+        SELECT category_assessment
+        FROM assessment
+        WHERE assessment_id = ?
+    `;
+    const [rows] = await dbPool.query(query, [assessmentId]);
+    if (rows.length === 0) return null;
+    return rows[0];
+};
 
 module.exports = {
     getAssessmentData,
@@ -259,9 +281,12 @@ module.exports = {
     getSelfAssessment,
     getPeerAssessment,
     getStatusPeerParticipant,
+    checkIfAssessed,
     getCategoryByAssessmentId,
-    insertScoreAssessment,
+    submitSelfAssessment,
     getValidQuestionIds,
     checkAllQuestionsAnswered,
     updateAssessmentEnrollmentStatus,
+    insertPeerScores,
+    getAssessmentById,
 };

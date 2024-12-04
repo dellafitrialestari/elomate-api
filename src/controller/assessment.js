@@ -174,7 +174,7 @@ const getPeerAssessment = async (req, res) => {
                 const tanggalObj = new Date(tanggal);
                 const [year, month, day] = tanggalObj.toISOString().split("T")[0].split("-");
                 
-                // Nama bulan dalam bahasa Indonesia
+                // Nama bulan
                 const namaBulan = [
                     "Januari", "Februari", "Maret", "April", "Mei", "Juni",
                     "Juli", "Agustus", "September", "Oktober", "November", "Desember"
@@ -185,7 +185,7 @@ const getPeerAssessment = async (req, res) => {
             return tanggal;
         };
 
-        // Proses setiap assignment untuk format tanggal_mulai dan tanggal_selesai
+        // format tanggal_mulai dan tanggal_selesai untuk setiap assessment
         const formattedAssessments = assessment.map((assessment) => ({
             ...assessment,
             tanggal_mulai: formatTanggal(assessment.tanggal_mulai),
@@ -212,12 +212,12 @@ const getStatusPeerParticipant = async (req, res) => {
 
         console.log("Received parameters:", { assessmentId, userId });
 
-        // kategori assessment
+        // get kategori assessment
         const assessmentData = await AssessmentModel.getCategoryByAssessmentId(assessmentId);
 
         if (!assessmentData) {
             return res.status(404).json({
-                message: `Assessment with ID ${assessmentId} not found.`
+                message: `Assessment with ID ${assessmentId} not found.`,
             });
         }
 
@@ -225,42 +225,58 @@ const getStatusPeerParticipant = async (req, res) => {
         const categoryAssessment = assessmentData.category_assessment;
         if (categoryAssessment !== "Peer Assessment") {
             return res.status(400).json({
-                message: `Assessment with ID ${assessmentId} is not categorized as Peer Assessment.`
+                message: `Assessment with ID ${assessmentId} is not categorized as Peer Assessment.`,
             });
         }
 
-        // all participant
+        // get peserta se-batch & se-role
         const [participants] = await AssessmentModel.getStatusPeerParticipant(assessmentId, userId);
 
         if (!participants || participants.length === 0) {
             return res.status(404).json({
-                message: "No participants found for this assessment"
+                message: "No participants found for this assessment",
             });
         }
 
-        // Format data peserta
-        const formattedData = {
+        // Cek apakah user sudah memberikan penilaian 360 derajat
+        const data = await Promise.all(
+            participants.map(async (participant) => {
+                const hasAssessed = await AssessmentModel.checkIfAssessed(
+                    assessmentId,
+                    userId,
+                    participant.user_id
+                );
+
+                return {
+                    user_id: participant.user_id,
+                    nama_lengkap: participant.nama_lengkap,
+                    role_name: participant.role_name,
+                    batch_name: participant.batch_name,
+                    nrp: participant.nrp,
+                    email: participant.email,
+                    posisi: participant.posisi,
+                    status_peer_assessment: hasAssessed ? "Complete" : "Incomplete",
+                };
+            })
+        );
+
+        // status total apakah semua "Complete" atau ada yang "Incomplete"
+        const allComplete = data.every((item) => item.status_peer_assessment === "Complete");
+        const overallStatus = allComplete ? "Complete" : "Incomplete";
+
+        // if `overall_status` = "Complete", masukkan ke tabel `assessment_enrollment`
+        if (overallStatus === "Complete") {
+            await AssessmentModel.updateAssessmentEnrollmentStatus(assessmentId, userId, overallStatus);
+        }
+
+        const response = {
             assessment_id: assessmentId,
             assessment_title: participants[0]?.assessment_title || "N/A",
-            data: participants.map((participant) => ({
-                user_id: participant.user_id,
-                nama_lengkap: participant.nama_lengkap,
-                role_name: participant.role_name,
-                batch_name: participant.batch_name,
-                nrp: participant.nrp,
-                email: participant.email,
-                posisi: participant.posisi,
-                // asal_universitas: participant.asal_universitas,
-                // jurusan: participant.jurusan,
-                // tempat_lahir: participant.tempat_lahir,
-                // tanggal_lahir: participant.tanggal_lahir,
-                // domisili: participant.domisili,
-                // no_hp: participant.no_hp,
-                status_peer_assessment: participant.status_peer_assessment || "Incomplete",
-            })),
+            overall_status: overallStatus,
+            data,
         };
 
-        return res.status(200).json(formattedData);
+        return res.status(200).json(response);
     } catch (error) {
         console.error("Error fetching participants:", error);
         return res.status(500).json({
@@ -270,42 +286,68 @@ const getStatusPeerParticipant = async (req, res) => {
     }
 };
 
-const insertScoreAssessment = async (req, res) => {
+const submitSelfAssessment = async (req, res) => {
     try {
         const userId = req.user.userId; // userId from middleware
         const responses = req.body;
-        const assessmentId = req.params.assessmentId
+        const assessmentId = req.params.assessmentId;
 
         if (!assessmentId) {
             return res.status(400).json({ message: "Assessment ID is required" });
         }
 
-        console.log("Assessment ID:", assessmentId);
+        // Assessment category check
+        const assessment = await AssessmentModel.getAssessmentById(assessmentId);
+        if (!assessment) {
+            return res.status(404).json({ message: "Assessment not found." });
+        }
+        if (assessment.category_assessment !== "Self Assessment") {
+            return res.status(400).json({ message: "This assessment is not a Self Assessment." });
+        }
 
-        // Mapping Likert -> skor numerik
+        // Validasi input
+        if (!Array.isArray(responses) || responses.length === 0) {
+            return res.status(400).json({ message: "Responses must be a non-empty array" });
+        }
+
+        // ID pertanyaan valid untuk assessment
+        const questionIds = responses.map((response) => response.question_id);
+        const validQuestionIds = await AssessmentModel.getValidQuestionIds(assessmentId, questionIds);
+
+        if (validQuestionIds.length !== questionIds.length) {
+            return res.status(400).json({ message: "Some question IDs are invalid for this assessment" });
+        }
+
+        // Mapping Likert skor numerik
         const likertMapping = {
-            "1 - Sangat Kurang Baik": 1,
-            "2 - Kurang Baik": 2,
-            "3 - Cukup Baik": 3,
-            "4 - Baik": 4,
-            "5 - Sangat Baik": 5,
+            1: "1 - Sangat Kurang Baik",
+            2: "2 - Kurang Baik",
+            3: "3 - Cukup Baik",
+            4: "4 - Baik",
+            5: "5 - Sangat Baik",
         };
 
-        // Konversi jawaban -> skor
-        const scores = responses.map((response) => ({
-            question_id: response.question_id,
-            answer_likert: likertMapping[response.answer_likert],
-            score: parseInt(response.answer_likert, 10),
-        }));
+        // Konversi jawaban -> format yang benar
+        const scores = responses.map((response) => {
+            const numericValue = parseInt(response.answer_likert, 10);
+            if (!likertMapping[numericValue]) {
+                throw new Error(`Invalid answer_likert value: ${response.answer_likert}`);
+            }
 
-        // Insert scores
-        await AssessmentModel.insertScoreAssessment(userId, scores);
+            return {
+                question_id: response.question_id,
+                answer_likert: likertMapping[numericValue], // Simpan format lengkap
+                score: numericValue, // Tetap simpan skor numerik
+            };
+        });
 
-        // Validasi semua pertanyaan dijawab
-        const questionIds = responses.map((response) => response.question_id);
+        // Insert
+        await AssessmentModel.submitSelfAssessment(userId, scores);
+
+        // semua pertanyaan sudah dijawab?
         const allQuestionsAnswered = await AssessmentModel.checkAllQuestionsAnswered(assessmentId, userId);
 
-        // Update status by validasi
+        // Update status assessment by validasi
         const status = allQuestionsAnswered ? "Complete" : "Incomplete";
         await AssessmentModel.updateAssessmentEnrollmentStatus(assessmentId, userId, status);
 
@@ -316,11 +358,76 @@ const insertScoreAssessment = async (req, res) => {
     }
 };
 
+
+const submitPeerAssessment = async (req, res) => {
+    const assessorId = req.user.userId; // Assessor ID dari middleware
+    const assessedId = req.params.assessedId; // Assessed ID - teman yang dinilai
+    const { assessmentId } = req.params;
+    const assessments = req.body;
+
+    try {
+        // Cek kategori assessment
+        const assessment = await AssessmentModel.getAssessmentById(assessmentId);
+        if (!assessment) {
+            return res.status(404).json({ message: "Assessment not found." });
+        }
+        if (assessment.category_assessment !== "Peer Assessment") {
+            return res.status(400).json({ message: "This assessment is not a Peer Assessment." });
+        }
+
+        // Validasi question_id di assessment
+        const questionIds = assessments.map(a => a.question_id);
+        const validQuestionIds = await AssessmentModel.getValidQuestionIds(assessmentId, questionIds);
+
+        // Cek apakah semua question_id valid
+        const invalidQuestionIds = questionIds.filter(id => !validQuestionIds.includes(id));
+        if (invalidQuestionIds.length > 0) {
+            return res.status(400).json({ 
+                message: "Some question IDs are invalid.", 
+                invalidQuestionIds 
+            });
+        }
+
+        // Mapping Likert -> format lengkap
+        const likertMapping = {
+            "1": "1 - Sangat Kurang Baik",
+            "2": "2 - Kurang Baik",
+            "3": "3 - Cukup Baik",
+            "4": "4 - Baik",
+            "5": "5 - Sangat Baik",
+        };
+
+        const formattedScores = assessments.map(assessment => {
+            const answerLikertFull = likertMapping[assessment.answer_likert];
+            if (!answerLikertFull) {
+                throw new Error(`Invalid answer_likert value: ${assessment.answer_likert}`);
+            }
+            return {
+                assessor_id: assessorId,
+                assessed_id: assessedId,
+                question_id: assessment.question_id,
+                answer_likert: answerLikertFull,
+                score: parseInt(assessment.answer_likert, 10), // Simpan skor numerik
+            };
+        });
+
+        // insert
+        await AssessmentModel.insertPeerScores(assessmentId, formattedScores);
+
+        return res.status(201).json({ message: "Peer assessment submitted successfully." });
+    } catch (error) {
+        console.error("Error submitting peer assessment:", error);
+        return res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+};
+
+
 module.exports = {
     getAssessmentData,
     getQuestionByAssessmentId,
     getSelfAssessment,
     getPeerAssessment,
     getStatusPeerParticipant,
-    insertScoreAssessment,
+    submitSelfAssessment,
+    submitPeerAssessment,
 };
