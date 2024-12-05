@@ -1,17 +1,16 @@
 const express = require("express");
-const QuestionsController = require("../controller/assignmentTask.js");
+const assessmentTaskController = require("../controller/assignmentTask.js");
 
 const router = express.Router();
 
 
-router.get("/:questionId", QuestionsController.getAnswerByQuestionsId);
+router.get("/:questionId", assessmentTaskController.getAnswerByQuestionsId);
 
 // GET - questions by assignment_id
-router.get("/question/:assignmentId", QuestionsController.getQuestionsByAssignmentId);
+router.get("/question/:assignmentId", assessmentTaskController.getQuestionsByAssignmentId);
 
-
-// POST - insert score based on user's answer for multiple-choice questions
-router.post("/scores/:assignmentId", QuestionsController.insertScoreForMultipleChoice);
+// POST
+router.post("/answer/:assignmentId", assessmentTaskController.insertUserAnswer);
 
 
 module.exports = router;
