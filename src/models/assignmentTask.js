@@ -3,6 +3,7 @@ const dbPool = require('../config/database');
 const getQuestionsByAssignmentId = (assignmentId, userId) => {
     const SQLQuery = `
     SELECT 
+        qa.question_id,
         qa.question_text,
         a.question_type,
         GROUP_CONCAT(DISTINCT mco.option_text ORDER BY mco.option_id) AS all_options,

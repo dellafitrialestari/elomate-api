@@ -1,4 +1,4 @@
-const QuestionsModel = require("../models/questions");
+const QuestionsModel = require("../models/assignmentTask");
 
 const getQuestionsByAssignmentId = async (req, res) => {
     const { assignmentId } = req.params;
@@ -29,6 +29,7 @@ const getQuestionsByAssignmentId = async (req, res) => {
             }
 
             return {
+                question_id: question.question_id,
                 question_text: question.question_text,
                 ...(question.question_type === "multiple_choice" && {
                     all_options: question.all_options ? question.all_options.split(",") : [],

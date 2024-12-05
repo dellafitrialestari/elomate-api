@@ -16,7 +16,7 @@ const usersRoutes = require("./routes/users");
 const coursesRoutes = require("./routes/courses");
 const preReadingRoutes = require("./routes/preReading");
 const assignmentRoutes = require("./routes/assignment");
-const questionsRoutes = require("./routes/questions");
+const assignmentTask = require("./routes/assignmentTask");
 const reportRoutes = require("./routes/report");
 const participantRoutes = require("./routes/participantData");
 const mentoringRoutes = require("./routes/mentoring");
@@ -46,7 +46,7 @@ app.use("/preReading", preReadingRoutes);
 
 app.use("/assignment", assignmentRoutes);
 
-app.use("/questions", questionsRoutes);
+app.use("/assignmentTask", assignmentTask);
 
 app.use("/report", reportRoutes);
 
