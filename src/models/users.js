@@ -188,6 +188,15 @@ const deleteEducationUser = (userId, educationId) => {
     return dbPool.execute(SQLQuery, [userId, educationId]);
 }
 
+const getLevelEducation = async () => {
+    const query = `SHOW COLUMNS FROM user_education LIKE 'jenjang_studi'`;
+    const [rows] = await dbPool.query(query);
+    const enumValues = rows[0].Type.match(/enum\(([^)]+)\)/)[1] // Ekstrak enum values
+        .split(',')
+        .map(value => value.replace(/'/g, '')); // Hapus tanda kutip
+    return enumValues;
+  };
+
 module.exports = {
     verifyUser,
     getAllUsers,
@@ -203,4 +212,5 @@ module.exports = {
     getPasswordById,
     insertEducationUser,
     deleteEducationUser,
+    getLevelEducation,
 }

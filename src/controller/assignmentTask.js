@@ -22,23 +22,38 @@ const getQuestionsByAssignmentId = async (req, res) => {
         }
 
         const formattedQuestions = questions.map((question) => {
-            let answerStatus = "-"; // Jawaban manual akan diinputkan kemudian
+            if (question.question_type === "multiple_choice") {
+                const answerStatus =
+                    question.user_answer !== "Tidak ada jawaban" &&
+                    question.user_answer === question.correct_options
+                        ? "benar"
+                        : "salah";
 
-            if (question.user_answer !== "Tidak ada jawaban" && question.question_type === "multiple_choice") {
-                answerStatus = question.user_answer === question.correct_options ? "benar" : "salah";
+                return {
+                    question_id: question.question_id,
+                    question_text: question.question_text,
+                    question_type: "Pilihan Ganda",
+                    all_options: question.all_options ? question.all_options.split(",") : [],
+                    correct_options: question.correct_options || "",
+                    user_answer: question.user_answer || "Tidak ada jawaban",
+                    answer_status: answerStatus,
+                };
             }
 
-            return {
-                question_id: question.question_id,
-                question_text: question.question_text,
-                ...(question.question_type === "multiple_choice" && {
-                    all_options: question.all_options ? question.all_options.split(",") : [],
-                    correct_options: question.correct_options || null,
-                }),
-                user_answer: question.user_answer || "Tidak ada jawaban",
-                answer_status: answerStatus,
-            };
-        });
+            if (question.question_type === "essay") {
+                return {
+                    question_id: question.question_id,
+                    question_text: question.question_text,
+                    question_type: "Essay",
+                    all_options: [], // Null for essay
+                    correct_options: "", // Null for essay
+                    user_answer: question.user_answer || "",
+                    answer_status: "", // Tidak ada benar/salah otomatis for essay
+                };
+            }
+
+            return null;
+        }).filter(Boolean); // Hapus entri null jika ada
 
         return res.status(200).json(formattedQuestions);
     } catch (error) {
@@ -49,6 +64,56 @@ const getQuestionsByAssignmentId = async (req, res) => {
         });
     }
 };
+
+// const getQuestionsByAssignmentId = async (req, res) => {
+//     const { assignmentId } = req.params;
+//     const userId = req.user.userId; // Pastikan userId diambil dari middleware autentikasi
+
+//     if (!assignmentId) {
+//         return res.status(400).json({
+//             message: "assignmentId is required in the request params",
+//             data: null,
+//         });
+//     }
+
+//     try {
+//         const [questions] = await QuestionsModel.getQuestionsByAssignmentId(assignmentId, userId);
+
+//         if (!questions || questions.length === 0) {
+//             return res.status(404).json({
+//                 message: "No questions found for this assignment",
+//                 data: null,
+//             });
+//         }
+
+//         const formattedQuestions = questions.map((question) => {
+//             let answerStatus = "-"; // Jawaban manual akan diinputkan kemudian
+
+//             if (question.user_answer !== "Tidak ada jawaban" && question.question_type === "multiple_choice") {
+//                 answerStatus = question.user_answer === question.correct_options ? "benar" : "salah";
+//             }
+
+//             return {
+//                 question_id: question.question_id,
+//                 question_text: question.question_text,
+//                 ...(question.question_type === "multiple_choice" && {
+//                     all_options: question.all_options ? question.all_options.split(",") : [],
+//                     correct_options: question.correct_options || null,
+//                 }),
+//                 user_answer: question.user_answer || "Tidak ada jawaban",
+//                 answer_status: answerStatus,
+//             };
+//         });
+
+//         return res.status(200).json(formattedQuestions);
+//     } catch (error) {
+//         console.error("Error fetching questions:", error);
+//         return res.status(500).json({
+//             message: "Internal server error",
+//             serverMessage: error.message,
+//         });
+//     }
+// };
 
 const getAnswerByQuestionsId = async (req, res) => {
     const { questionId } = req.params;

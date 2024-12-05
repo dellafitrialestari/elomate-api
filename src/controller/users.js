@@ -507,6 +507,27 @@ const deleteEducationUser = async (req, res) => {
   }
 };
 
+const getLevelEducation = async (req, res) => {
+  
+  try {
+
+      const tipeMentoring = await UsersModel.getLevelEducation();
+
+      // return res.status(200).json({
+      //     tipe_mentoring: tipeMentoring
+      // });
+
+      return res.status(200).json(tipeMentoring);
+  } catch (error) {
+      console.error("Error fetching jenjang studi:", error);
+      return res.status(500).json({
+          message: "Internal server error",
+          serverMessage: error.message,
+      });
+  }
+};
+
+
 
 module.exports = {
   loginUser,
@@ -523,4 +544,5 @@ module.exports = {
   updatePassword,
   insertEducationUser,
   deleteEducationUser,
+  getLevelEducation,
 };
