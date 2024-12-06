@@ -32,6 +32,7 @@ const getQuestionByAssessmentId = async (assessmentId) => {
     SELECT 
         qa.assessment_id,
         a.title AS assessment_title,
+        a.category_assessment,
         qa.question_id,
         qa.question_text
     FROM 
@@ -122,6 +123,8 @@ const getStatusPeerParticipant = async (assessmentId, userId) => {
         batch_data b ON u.batch_data_batch_id = b.batch_id
     JOIN 
         assessment a ON a.assessment_id = ? AND a.category_assessment = 'Peer Assessment'
+    LEFT JOIN 
+        assessment_enrollment ae ON ae.assessment_id = a.assessment_id AND ae.user_user_id = u.user_id
     WHERE 
         u.batch_data_batch_id = (
             SELECT batch_data_batch_id
@@ -135,9 +138,17 @@ const getStatusPeerParticipant = async (assessmentId, userId) => {
             WHERE user_id = ?
         )
     AND 
+        EXISTS (
+            SELECT 1
+            FROM course_enrollment ce
+            JOIN course c ON ce.course_id = c.course_id
+            WHERE ce.user_user_id = ?
+            AND c.batch_data_batch_id = u.batch_data_batch_id
+        )
+    AND 
         u.user_id != ?; -- Exclude the current user
     `;
-    return dbPool.execute(SQLQuery, [assessmentId, userId, userId, userId]);
+    return dbPool.execute(SQLQuery, [assessmentId, userId, userId, userId, userId]);
 };
 
 const checkIfAssessed = async (assessmentId, assessorId, assessedId) => {
@@ -275,6 +286,19 @@ const getAssessmentById = async (assessmentId) => {
     return rows[0];
 };
 
+const getAssessmentTitleById = async (assessmentId) => {
+    const SQLQuery = `
+    SELECT 
+        title AS assessment_title,
+        category_assessment
+    FROM 
+        assessment
+    WHERE 
+        assessment_id = ?;
+    `;
+    return dbPool.execute(SQLQuery, [assessmentId]);
+};
+
 module.exports = {
     getAssessmentData,
     getQuestionByAssessmentId,
@@ -289,4 +313,5 @@ module.exports = {
     updateAssessmentEnrollmentStatus,
     insertPeerScores,
     getAssessmentById,
+    getAssessmentTitleById,
 };

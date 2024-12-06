@@ -76,15 +76,29 @@ const getQuestionByAssessmentId = async (req, res) => {
         const [assessment] = await AssessmentModel.getQuestionByAssessmentId(assessmentId);
         
         if (!assessment || assessment.length === 0) {
+            // Jika tidak ada data dalam query, tampilkan assessment_id dan assessment_title dengan question kosong
+            const [titleResult] = await AssessmentModel.getAssessmentTitleById(assessmentId);
+
+            if (!titleResult || titleResult.length === 0) {
+                return res.status(404).json({
+                    message: "Assessment not found",
+                    assessment_id: assessmentId,
+                    assessment_title: null,
+                });
+            }
+
             return res.status(404).json({
                 message: "No question assessment found for this user",
-                data: null,
+                assessment_id: assessmentId,
+                assessment_title: titleResult[0].assessment_title,
+                category_assessment: titleResult[0].category_assessment,
             });
         }
 
         const formattedData = {
             assessment_id: assessment[0].assessment_id,
             assessment_title: assessment[0].assessment_title,
+            category_assessment: assessment[0].category_assessment,
             question: assessment.map((item) => ({
                 question_id: item.question_id,
                 question_text: item.question_text,
