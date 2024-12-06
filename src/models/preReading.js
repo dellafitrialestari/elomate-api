@@ -24,7 +24,7 @@ const getMateriByUser = (userId) => {
     JOIN 
         batch_data b ON u.batch_data_batch_id = b.batch_id
     LEFT JOIN 
-        files f ON m.materi_id = f.materi_id
+        materi_files f ON m.materi_id = f.materi_id
     WHERE 
         u.user_id = ?;
     `;
@@ -56,7 +56,7 @@ const getMateriByUserCourse = (userId, courseId) => {
     JOIN 
         batch_data b ON u.batch_data_batch_id = b.batch_id
     LEFT JOIN 
-        files f ON m.materi_id = f.materi_id
+        materi_files f ON m.materi_id = f.materi_id
     WHERE 
         u.user_id = ?
 		AND c.course_id = ?;
@@ -88,7 +88,7 @@ const getMateriByMateriId = (userId, materiId) => {
     JOIN 
         batch_data b ON u.batch_data_batch_id = b.batch_id
     LEFT JOIN 
-        files f ON m.materi_id = f.materi_id
+        materi_files f ON m.materi_id = f.materi_id
     WHERE 
         u.user_id = ?
         AND m.materi_id = ?;

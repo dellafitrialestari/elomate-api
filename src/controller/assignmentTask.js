@@ -1,5 +1,41 @@
 const QuestionsModel = require("../models/assignmentTask");
 
+const { Storage } = require("@google-cloud/storage");
+const { format } = require("util");
+
+const path = require("path");
+
+const storage = new Storage({
+    keyFilename: path.join(__dirname, "../config/key.json"),
+    projectId: "cogent-node-424708-d7",
+});
+
+const bucketName = "elomate-files";
+const bucket = storage.bucket(bucketName);
+
+// Helper mengunggah file ke GCS dalam folder
+async function uploadToGCS(file, folderName = "") {
+    // '/' untuk menyimbolkan folder di GCS
+    const filePath = folderName ? `${folderName}/${file.originalname}` : file.originalname;
+    const blob = bucket.file(filePath);
+
+    const stream = blob.createWriteStream({
+        resumable: false,
+        contentType: file.mimetype,
+    });
+
+    return new Promise((resolve, reject) => {
+        stream.on("finish", async () => {
+            const publicUrl = format(
+                `https://storage.googleapis.com/${bucket.name}/${blob.name}`
+            );
+            resolve({ fileName: file.originalname, publicUrl });
+        });
+        stream.on("error", (err) => reject(err));
+        stream.end(file.buffer);
+    });
+}
+
 // const getQuestionsByAssignmentId = async (req, res) => {
 //     const { assignmentId } = req.params;
 //     const userId = req.user.userId; // Pastikan userId diambil dari middleware autentikasi
@@ -233,10 +269,64 @@ const insertUserAnswer = async (req, res) => {
     }
 };
 
+// ------------------------------------------------------
+
+// Controller untuk mengunggah jawaban esai
+const insertUserEssayAnswer = async (req, res) => {
+    try {
+        const { assignmentId } = req.params;
+        const userId = req.user?.userId || 1;
+        const { essay_answer } = req.body;
+        const file = req.file;
+
+        if (!assignmentId || !essay_answer) {
+            return res.status(400).json({ message: "Missing required fields" });
+        }
+
+        const questions = await QuestionsModel.findQuestionsByAssignmentId(assignmentId);
+        if (!questions || questions.length === 0) {
+            return res.status(404).json({ message: `No questions found for assignment ${assignmentId}.` });
+        }
+
+        const userAnswers = questions.map((question) => ({
+            user_user_id: userId,
+            question_id: question.question_id,
+            essay_answer,
+            answer_option_id: null,
+        }));
+
+        const insertedAnswers = await QuestionsModel.insertUserAnswersBulk(userAnswers);
+
+        if (file) {
+            const folderName = `assignments/${assignmentId}/answers`;
+            const fileData = await uploadToGCS(file, folderName);
+
+            // all relevan ID 
+            const userAnswerIds = insertedAnswers.map((answer) => ({
+                user_answer_id: answer.user_answer_id,
+            }));
+
+            await QuestionsModel.insertAssignmentFile({
+                file_name_id: fileData.fileName,
+                bucket_name: bucketName,
+                file_size: file.size,
+                content_type: file.mimetype,
+                user_answers: userAnswerIds, // add all ID jawaban
+            });
+        }
+
+        res.status(201).json({ message: "Answers submitted successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message || "An error occurred." });
+    }
+};
+
 
 
 module.exports = {
     getAnswerByQuestionsId,
     getQuestionsByAssignmentId,
     insertUserAnswer,
+    insertUserEssayAnswer,
 };

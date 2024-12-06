@@ -151,8 +151,12 @@ const insertUserAnswer = async (data) => {
             answer_option_id = VALUES(answer_option_id),
             submitted_at = NOW();
     `;
+    // const values = [data.user_user_id, data.question_id, data.essay_answer, data.answer_option_id];
+    // await dbPool.query(query, values);
+
     const values = [data.user_user_id, data.question_id, data.essay_answer, data.answer_option_id];
-    await dbPool.query(query, values);
+    const [result] = await dbPool.query(query, values);
+    return result;
 };
 
 const findQuestionByIdAndAssignment = async (questionId, assignmentId) => {
@@ -201,6 +205,115 @@ const checkAssignmentId = async(assignmentId) => {
     await dbPool.query(query, [assignmentId]);
 }
 
+const insertUserAnswer2 = async (data) => {
+    const query = `
+        INSERT INTO user_has_answers_assignment
+            (user_user_id, question_id, essay_answer, answer_option_id, submitted_at)
+        VALUES ?
+        ON DUPLICATE KEY UPDATE
+            essay_answer = VALUES(essay_answer),
+            answer_option_id = VALUES(answer_option_id),
+            submitted_at = NOW();
+    `;
+
+    // array nilai for setiap question_id
+    const values = data.question_ids.map((question_id) => [
+        data.user_user_id,
+        question_id,
+        data.essay_answer,
+        null, // null -> answer_option_id
+    ]);
+
+    const [result] = await dbPool.query(query, [values]);
+    return result;
+};
+
+
+const insertAssignmentFile = async (data) => {
+    const query = `
+        INSERT INTO assignment_files 
+            (file_name_id, bucket_name, file_size, content_type, created_at, user_answer_id)
+        VALUES ?
+        ON DUPLICATE KEY UPDATE
+            file_name_id = VALUES(file_name_id),
+            bucket_name = VALUES(bucket_name),
+            file_size = VALUES(file_size),
+            content_type = VALUES(content_type),
+            created_at = VALUES(created_at);
+    `;
+
+    // Membuat array nilai untuk setiap `user_answer_id`
+    const values = data.user_answers.map((userAnswer) => [
+        data.file_name_id,
+        data.bucket_name,
+        data.file_size,
+        data.content_type,
+        new Date(), // Tanggal saat ini
+        userAnswer.user_answer_id, // ID jawaban yang terkait
+    ]);
+
+    const [result] = await dbPool.query(query, [values]);
+    return result; // Mengembalikan hasil query
+};
+
+
+
+
+// const insertAssignmentFile = async (data) => {
+//     const query = `
+//         INSERT INTO assignment_files 
+//         (file_name_id, bucket_name, file_size, content_type, created_at, assignment_id)
+//         VALUES (?, ?, ?, ?, NOW(), ?);
+//     `;
+//     const values = [
+//         data.file_name_id,
+//         data.bucket_name,
+//         data.file_size,
+//         data.content_type,
+//         data.assignment_id
+//     ];
+//     await dbPool.query(query, values);
+// };
+
+const insertUserAnswersBulk = async (answers) => {
+    const query = `
+        INSERT INTO user_has_answers_assignment
+            (user_user_id, question_id, essay_answer, answer_option_id, submitted_at)
+        VALUES ?
+        ON DUPLICATE KEY UPDATE
+            essay_answer = VALUES(essay_answer),
+            answer_option_id = VALUES(answer_option_id),
+            submitted_at = VALUES(submitted_at);
+    `;
+    const values = answers.map((answer) => [
+        answer.user_user_id,
+        answer.question_id,
+        answer.essay_answer,
+        answer.answer_option_id,
+        new Date(), // submitted_at
+    ]);
+
+    const [result] = await dbPool.query(query, [values]);
+
+    const insertedIds = await dbPool.query(`
+        SELECT user_answer_id FROM user_has_answers_assignment
+        WHERE user_user_id = ? AND question_id IN (?)`,
+        [answers[0].user_user_id, answers.map((a) => a.question_id)]
+    );
+
+    return insertedIds[0];
+};
+
+const findQuestionsByAssignmentId = async (assignmentId) => {
+    const query = `
+        SELECT question_id
+        FROM question_assignment
+        WHERE assignment_id = ?;
+    `;
+    const [rows] = await dbPool.query(query, [assignmentId]);
+    return rows;
+};
+
 module.exports = {
     getQuestionsByAssignmentId,
     getAnswerByQuestionsId,
@@ -210,4 +323,8 @@ module.exports = {
     findOptionIdByTextAndQuestion,
     insertOrUpdateScore,
     checkAssignmentId,
+    insertAssignmentFile,
+    insertUserAnswer2,
+    insertUserAnswersBulk,
+    findQuestionsByAssignmentId,
 }

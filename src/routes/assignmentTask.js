@@ -3,6 +3,7 @@ const assessmentTaskController = require("../controller/assignmentTask.js");
 
 const router = express.Router();
 
+const { upload } = require("../middleware/upload");
 
 router.get("/:questionId", assessmentTaskController.getAnswerByQuestionsId);
 
@@ -11,6 +12,15 @@ router.get("/question/:assignmentId", assessmentTaskController.getQuestionsByAss
 
 // POST
 router.post("/answer/:assignmentId", assessmentTaskController.insertUserAnswer);
+
+// router.post("/answerEssay/:assignmentId", assessmentTaskController.insertUserEssayAnswer);
+
+
+router.post(
+    "/answerEssay/:assignmentId",
+    upload.single("lampiran_file"),
+    assessmentTaskController.insertUserEssayAnswer
+);
 
 
 module.exports = router;
