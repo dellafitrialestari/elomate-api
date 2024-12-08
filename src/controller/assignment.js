@@ -52,26 +52,26 @@ const getAssignmentByUser = async (req, res) => {
 
 const getTodoUser = async (req, res) => {
     try {
-        const userId = req.user.userId; // Ensure userId is extracted via middleware authentication
-        
-        // Fetch courses based on user ID
-        const [assignment] = await AssignmentModel.getTodoUser(userId);
-        
-        if (!assignment || assignment.length === 0) {
+        const userId = req.user.userId; // Pastikan userId diekstrak dari middleware autentikasi
+
+        // Ambil semua assignment dan status assessment berdasarkan userId
+        const [assignments] = await AssignmentModel.getTodoUser(userId);
+        const [assessments] = await AssignmentModel.getAssessmentStatusByUser(userId);
+
+        if ((!assignments || assignments.length === 0) && (!assessments || assessments.length === 0)) {
             return res.status(404).json({
                 message: "No to-do found for this user",
                 data: null,
             });
         }
-        
-  
-        // Format tanggal untuk setiap tugas tanpa mengubah zona waktu
+
+        // Format tanggal untuk tugas dan assessment
         const formatTanggal = (tanggal) => {
             if (tanggal) {
                 const tanggalObj = new Date(tanggal);
                 const [year, month, day] = tanggalObj.toISOString().split("T")[0].split("-");
                 
-                // Nama bulan dalam bahasa Indonesia
+                // Nama bulan
                 const namaBulan = [
                     "Januari", "Februari", "Maret", "April", "Mei", "Juni",
                     "Juli", "Agustus", "September", "Oktober", "November", "Desember"
@@ -81,24 +81,32 @@ const getTodoUser = async (req, res) => {
             }
             return tanggal;
         };
-  
-        // Proses setiap assignment untuk format tanggal_mulai dan tanggal_selesai
-        const formattedAssignments = assignment.map((assignment) => ({
-          ...assignment,
-          tanggal_mulai: formatTanggal(assignment.tanggal_mulai),
-          tanggal_selesai: formatTanggal(assignment.tanggal_selesai),
-        }));
-  
-        // Return the array directly without wrapping in an object
-        return res.status(200).json(formattedAssignments);
+
+        // Format data untuk response
+        const formattedTodos = [
+            ...assignments.map((assignment) => ({
+                type: "Assignment",
+                ...assignment,
+                tanggal_mulai: formatTanggal(assignment.tanggal_mulai),
+                tanggal_selesai: formatTanggal(assignment.tanggal_selesai),
+            })),
+            ...assessments.map((assessment) => ({
+                type: "Assessment",
+                ...assessment,
+                tanggal_mulai: formatTanggal(assessment.tanggal_mulai),
+                tanggal_selesai: formatTanggal(assessment.tanggal_selesai),
+            })),
+        ];
+
+        return res.status(200).json(formattedTodos);
     } catch (error) {
-        console.error("Error fetching courses:", error);
+        console.error("Error fetching todos:", error);
         return res.status(500).json({
             message: "Internal server error",
             serverMessage: error.message,
         });
     }
-  };
+};
 
 const getAssignmentByUserCourse = async (req, res) => {
     const { courseId } = req.params;

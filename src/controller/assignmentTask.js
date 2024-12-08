@@ -271,7 +271,7 @@ const insertUserAnswer = async (req, res) => {
 
 // ------------------------------------------------------
 
-// Controller untuk mengunggah jawaban esai
+// insert jawaban esai
 const insertUserEssayAnswer = async (req, res) => {
     try {
         const { assignmentId } = req.params;
@@ -283,9 +283,26 @@ const insertUserEssayAnswer = async (req, res) => {
             return res.status(400).json({ message: "Missing required fields" });
         }
 
+        // Cek assignment_id
+        const assignmentExists = await QuestionsModel.checkAssignmentId(assignmentId);
+        if (!assignmentExists || assignmentExists.length === 0) {
+            return res.status(404).json({ message: `Assignment with ID ${assignmentId} does not exist.` });
+        }
+
         const questions = await QuestionsModel.findQuestionsByAssignmentId(assignmentId);
         if (!questions || questions.length === 0) {
             return res.status(404).json({ message: `No questions found for assignment ${assignmentId}.` });
+        }
+
+        const questionTypes = await Promise.all(
+            questions.map((question) =>
+                QuestionsModel.findQuestionByIdAndAssignment(question.question_id, assignmentId)
+            )
+        );
+
+        const nonEssayQuestions = questionTypes.filter((q) => q.question_type !== 'essay');
+        if (nonEssayQuestions.length > 0) {
+            return res.status(400).json({ message: "Only 'essay' type questions are allowed for this operation." });
         }
 
         const userAnswers = questions.map((question) => ({
@@ -301,7 +318,6 @@ const insertUserEssayAnswer = async (req, res) => {
             const folderName = `assignments/${assignmentId}/answers`;
             const fileData = await uploadToGCS(file, folderName);
 
-            // all relevan ID 
             const userAnswerIds = insertedAnswers.map((answer) => ({
                 user_answer_id: answer.user_answer_id,
             }));
@@ -311,7 +327,7 @@ const insertUserEssayAnswer = async (req, res) => {
                 bucket_name: bucketName,
                 file_size: file.size,
                 content_type: file.mimetype,
-                user_answers: userAnswerIds, // add all ID jawaban
+                user_answers: userAnswerIds,
             });
         }
 
@@ -322,6 +338,53 @@ const insertUserEssayAnswer = async (req, res) => {
     }
 };
 
+const insertScoreEssay = async (req, res) => { 
+    const { assignmentId } = req.params;
+    const { score_answer } = req.body;
+
+    try {
+        const userId = req.user?.userId;
+        if (!userId) {
+            return res.status(401).json({ message: "User ID tidak ditemukan. Pastikan Anda telah login." });
+        }
+
+        const assignment = await QuestionsModel.checkAssignmentId(assignmentId);
+        if (assignment.length === 0) {
+            return res.status(404).json({ message: "Assignment ID tidak ditemukan." });
+        }
+
+        // check assignment bertipe essay
+        const questionType = assignment[0].question_type;
+        if (questionType !== "essay") {
+            return res.status(400).json({ message: "Assignment bukan tipe essay." });
+        }
+
+        // Cek jika score_user_assignment ada
+        const existingScore = await QuestionsModel.findScoreUserAssignment(userId, assignmentId);
+        if (existingScore.length === 0) {
+            // Insert score baru
+            await QuestionsModel.insertOrUpdateScore({
+                user_id: userId, 
+                assignment_id: assignmentId,
+                score: score_answer,
+                active_status: "Complete",
+            });
+            return res.status(201).json({ message: "Score berhasil ditambahkan." });
+        } else {
+            // Update score
+            await QuestionsModel.insertOrUpdateScore({
+                user_id: userId,
+                assignment_id: assignmentId,
+                score: score_answer,
+                active_status: "Complete",
+            });
+            return res.status(200).json({ message: "Score berhasil diperbarui." });
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Terjadi kesalahan server." });
+    }
+};
 
 
 module.exports = {
@@ -329,4 +392,5 @@ module.exports = {
     getQuestionsByAssignmentId,
     insertUserAnswer,
     insertUserEssayAnswer,
+    insertScoreEssay,
 };

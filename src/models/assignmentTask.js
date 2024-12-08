@@ -202,7 +202,8 @@ const insertOrUpdateScore = async (data) => {
 
 const checkAssignmentId = async(assignmentId) => {
     const query =  `SELECT * FROM assignment WHERE assignment_id = ?`;
-    await dbPool.query(query, [assignmentId]);
+    const [rows] = await dbPool.query(query, [assignmentId]);
+    return rows;
 }
 
 const insertUserAnswer2 = async (data) => {
@@ -230,30 +231,54 @@ const insertUserAnswer2 = async (data) => {
 
 
 const insertAssignmentFile = async (data) => {
-    const query = `
-        INSERT INTO assignment_files 
-            (file_name_id, bucket_name, file_size, content_type, created_at, user_answer_id)
-        VALUES ?
-        ON DUPLICATE KEY UPDATE
-            file_name_id = VALUES(file_name_id),
-            bucket_name = VALUES(bucket_name),
-            file_size = VALUES(file_size),
-            content_type = VALUES(content_type),
-            created_at = VALUES(created_at);
-    `;
+    // cek for setiap user_answer_id
+    const existingFiles = await Promise.all(
+        data.user_answers.map(async (userAnswer) => {
+            const queryCheck = `
+                SELECT * 
+                FROM assignment_files 
+                WHERE file_name_id = ? 
+                  AND bucket_name = ? 
+                  AND file_size = ? 
+                  AND content_type = ? 
+                  AND user_answer_id = ?;
+            `;
+            const [rows] = await dbPool.query(queryCheck, [
+                data.file_name_id,
+                data.bucket_name,
+                data.file_size,
+                data.content_type,
+                userAnswer.user_answer_id,
+            ]);
+            return rows.length > 0 ? rows[0] : null;
+        })
+    );
 
-    // Membuat array nilai untuk setiap `user_answer_id`
-    const values = data.user_answers.map((userAnswer) => [
-        data.file_name_id,
-        data.bucket_name,
-        data.file_size,
-        data.content_type,
-        new Date(), // Tanggal saat ini
-        userAnswer.user_answer_id, // ID jawaban yang terkait
-    ]);
+    // Filter data yang belum ada
+    const newValues = data.user_answers.filter((userAnswer, index) => !existingFiles[index]);
 
-    const [result] = await dbPool.query(query, [values]);
-    return result; // Mengembalikan hasil query
+    // Insert
+    if (newValues.length > 0) {
+        const queryInsert = `
+            INSERT INTO assignment_files 
+                (file_name_id, bucket_name, file_size, content_type, created_at, user_answer_id)
+            VALUES ?;
+        `;
+
+        const values = newValues.map((userAnswer) => [
+            data.file_name_id,
+            data.bucket_name,
+            data.file_size,
+            data.content_type,
+            new Date(),
+            userAnswer.user_answer_id,
+        ]);
+
+        const [result] = await dbPool.query(queryInsert, [values]);
+        return result;
+    }
+
+    return { affectedRows: 0 };
 };
 
 
@@ -314,6 +339,17 @@ const findQuestionsByAssignmentId = async (assignmentId) => {
     return rows;
 };
 
+const findScoreUserAssignment = async (userId, assignmentId) => {
+    const query = `
+        SELECT * 
+        FROM score_user_assignment 
+        WHERE user_id = ? AND assignment_id = ?;
+    `;
+    const [rows] = await dbPool.query(query, [userId, assignmentId]);
+    return rows;
+};
+
+
 module.exports = {
     getQuestionsByAssignmentId,
     getAnswerByQuestionsId,
@@ -327,4 +363,5 @@ module.exports = {
     insertUserAnswer2,
     insertUserAnswersBulk,
     findQuestionsByAssignmentId,
+    findScoreUserAssignment,
 }

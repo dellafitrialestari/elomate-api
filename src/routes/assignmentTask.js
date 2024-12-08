@@ -11,7 +11,7 @@ router.get("/:questionId", assessmentTaskController.getAnswerByQuestionsId);
 router.get("/question/:assignmentId", assessmentTaskController.getQuestionsByAssignmentId);
 
 // POST
-router.post("/answer/:assignmentId", assessmentTaskController.insertUserAnswer);
+router.post("/answerMultiple/:assignmentId", assessmentTaskController.insertUserAnswer);
 
 // router.post("/answerEssay/:assignmentId", assessmentTaskController.insertUserEssayAnswer);
 
@@ -22,5 +22,6 @@ router.post(
     assessmentTaskController.insertUserEssayAnswer
 );
 
+router.post("/scoreEssay/:assignmentId", assessmentTaskController.insertScoreEssay);
 
 module.exports = router;

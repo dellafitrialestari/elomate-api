@@ -62,36 +62,55 @@ const getCoursesByUserIdAndPhaseAndTopic = async (req, res) => {
 
   // Check if phase or topic is missing
   if (!phase || !topic) {
-      return res.status(400).json({
-          message: "Phase and topic are required parameters",
-          data: null,
-      });
+    return res.status(400).json({
+      message: "Phase and topic are required parameters",
+      data: null,
+    });
   }
 
   try {
-      const userId = req.user.userId; // Ensure userId is extracted via middleware authentication
-      
-      // Fetch courses based on user ID
-      const [courses] = await CoursesModel.getCoursesByUserIdAndPhaseAndTopic(userId, phase, topic);
-      
-      if (!courses || courses.length === 0) {
-          return res.status(404).json({
-              message: "No courses found for this user",
-              data: null,
-          });
-      }
+    const userId = req.user.userId; // User ID dari middleware authentication
 
-      // Return all courses related to the user
-      // return res.status(200).json({ courses });
+    // Fetch courses berdasarkan phase dan topic
+    const [courses] = await CoursesModel.getCoursesByUserIdAndPhaseAndTopic(userId, phase, topic);
 
-      // Return the array directly without wrapping in an object
-      return res.status(200).json(courses);
-  } catch (error) {
-      console.error("Error fetching courses:", error);
-      return res.status(500).json({
-          message: "Internal server error",
-          serverMessage: error.message,
+    if (!courses || courses.length === 0) {
+      return res.status(404).json({
+        message: "No courses found for this user",
+        data: null,
       });
+    }
+
+    // Perbarui progress setiap course (gunakan Promise.all)
+    await Promise.all(
+      courses.map(async (course) => {
+        const courseId = course.course_id;
+
+        // Fetch total assignments untuk kursus tertentu
+        const [[{ total_assignments }]] = await CoursesModel.getTotalAssignmentsByCourseId(courseId);
+
+        // Fetch jumlah assignments yang sudah selesai
+        const [[{ completed_assignments }]] = await CoursesModel.getCompletedAssignmentsByUserIdAndCourseId(userId, courseId);
+
+        // Hitung progress
+        const progress =
+          total_assignments > 0
+            ? Math.floor((completed_assignments / total_assignments) * 100)
+            : 0;
+
+        // Update progress to database
+        await CoursesModel.updateCourseProgress(userId, courseId, progress);
+      })
+    );
+
+    // Response dengan daftar courses (dengan progress yang sudah diperbarui)
+    return res.status(200).json(courses);
+  } catch (error) {
+    console.error("Error fetching courses:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+      serverMessage: error.message,
+    });
   }
 };
 

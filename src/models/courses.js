@@ -245,6 +245,35 @@ const TopicByPhaseUserId = (userId, phaseCourse) => {
     return dbPool.execute(SQLQuery, [userId, phaseCourse]);
 }
 
+const getTotalAssignmentsByCourseId = (courseId) => {
+    const SQLQuery = `
+        SELECT COUNT(*) AS total_assignments
+        FROM assignment
+        WHERE course_id = ?;
+    `;
+    return dbPool.execute(SQLQuery, [courseId]);
+};
+
+const getCompletedAssignmentsByUserIdAndCourseId = (userId, courseId) => {
+    const SQLQuery = `
+        SELECT COUNT(*) AS completed_assignments
+        FROM score_user_assignment sua
+        JOIN assignment a ON sua.assignment_id = a.assignment_id
+        WHERE sua.user_id = ? AND a.course_id = ? AND sua.active_status = 'Complete';
+    `;
+    return dbPool.execute(SQLQuery, [userId, courseId]);
+};
+
+const updateCourseProgress = (userId, courseId, progress) => {
+    const SQLQuery = `
+        UPDATE course_enrollment
+        SET progress = ?
+        WHERE user_user_id = ? AND course_id = ?;
+    `;
+    return dbPool.execute(SQLQuery, [progress, userId, courseId]);
+};
+
+
 module.exports = {
     getCoursesByUserId,
     getCoursesProgressByUser,
@@ -256,4 +285,8 @@ module.exports = {
     getTopicByPhase,
     getTopicByPhaseUserId,
     TopicByPhaseUserId,
+    // course progress
+    getTotalAssignmentsByCourseId,
+    getCompletedAssignmentsByUserIdAndCourseId,
+    updateCourseProgress,
 };

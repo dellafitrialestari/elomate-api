@@ -189,6 +189,30 @@ const getAssignmentByAssignmentId = (userId, assignmentId) => {
     return dbPool.execute(SQLQuery, [userId, assignmentId]);
 }
 
+const getAssessmentStatusByUser = (userId) => {
+    const SQLQuery = `
+    SELECT 
+        a.assessment_id,
+        a.title,
+        a.tanggal_mulai,
+        a.tanggal_selesai,
+        a.category_assessment,
+        COALESCE(ae.status, 'Incomplete') AS active
+    FROM 
+        assessment a
+    LEFT JOIN 
+        assessment_enrollment ae 
+        ON a.assessment_id = ae.assessment_id 
+        AND ae.user_user_id = ?
+    WHERE 
+        COALESCE(ae.status, 'Incomplete') = 'Incomplete'
+    ORDER BY 
+        a.tanggal_selesai ASC;
+    `;
+    return dbPool.execute(SQLQuery, [userId]);
+};
+
+
 module.exports = {
     getAssignmentByUser,
     getTodoUser,
@@ -196,4 +220,5 @@ module.exports = {
     getAssignmentByUserCoursePreActivity,
     getAssignmentByUserCoursePostActivity,
     getAssignmentByAssignmentId,
+    getAssessmentStatusByUser,
 }
