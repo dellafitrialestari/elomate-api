@@ -22,6 +22,7 @@ const participantRoutes = require("./routes/participantData");
 const mentoringRoutes = require("./routes/mentoring");
 const assessmentRoutes = require("./routes/assessment");
 const filesRoutes = require("./routes/files");
+const kirkpatrickRoutes = require("./routes/kirkpatrick");
 
 const middlewareLogRequest = require("./middleware/logs");
 const authenticateJWT = require("./middleware/auth");
@@ -57,6 +58,8 @@ app.use("/mentoring", mentoringRoutes);
 app.use("/assessment", assessmentRoutes);
 
 app.use("/files", filesRoutes);
+
+app.use("/kirkpatrick", kirkpatrickRoutes);
 
 // app.post('/upload',upload.single('photo'),(req, res) => {
 //     res.json({

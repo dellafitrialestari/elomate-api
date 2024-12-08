@@ -70,7 +70,7 @@ const getTodoUser = async (req, res) => {
             if (tanggal) {
                 const tanggalObj = new Date(tanggal);
                 const [year, month, day] = tanggalObj.toISOString().split("T")[0].split("-");
-                
+
                 // Nama bulan
                 const namaBulan = [
                     "Januari", "Februari", "Maret", "April", "Mei", "Juni",
@@ -85,16 +85,23 @@ const getTodoUser = async (req, res) => {
         // Format data untuk response
         const formattedTodos = [
             ...assignments.map((assignment) => ({
-                type: "Assignment",
-                ...assignment,
+                assignment_id: assignment.assignment_id,
+                course_id: assignment.course_id,
+                nama_course: assignment.nama_course,
+                title: assignment.title,
+                question_type: assignment.question_type,
                 tanggal_mulai: formatTanggal(assignment.tanggal_mulai),
                 tanggal_selesai: formatTanggal(assignment.tanggal_selesai),
+                category: assignment.category,
+                active: assignment.active,
             })),
             ...assessments.map((assessment) => ({
-                type: "Assessment",
-                ...assessment,
+                assessment_id: assessment.assessment_id,
+                title: assessment.title,
                 tanggal_mulai: formatTanggal(assessment.tanggal_mulai),
                 tanggal_selesai: formatTanggal(assessment.tanggal_selesai),
+                category: "assessment",
+                active: assessment.active,
             })),
         ];
 
