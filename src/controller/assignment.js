@@ -97,7 +97,8 @@ const getTodoUser = async (req, res) => {
             })),
             ...assessments.map((assessment) => ({
                 assessment_id: assessment.assessment_id,
-                title: assessment.title,
+                nama_course: assessment.title,
+                title: assessment.category_assessment,
                 tanggal_mulai: formatTanggal(assessment.tanggal_mulai),
                 tanggal_selesai: formatTanggal(assessment.tanggal_selesai),
                 category: "assessment",
