@@ -319,6 +319,14 @@ const insertUserEssayAnswer = async (req, res) => {
 
         const insertedAnswers = await QuestionsModel.insertUserAnswersBulk(userAnswers);
 
+        // Update score_user_assignment.active_status = "Complete"
+        await QuestionsModel.insertOrUpdateScore({
+            user_id: userId,
+            assignment_id: assignmentId,
+            score: 0,
+            active_status: "Complete",
+        });
+
         if (file) {
             const folderName = `assignments/${assignmentId}/answers`;
             const fileData = await uploadToGCS(file, folderName);
@@ -336,7 +344,7 @@ const insertUserEssayAnswer = async (req, res) => {
             });
         }
 
-        res.status(201).json({ message: "Answers submitted successfully" });
+        res.status(201).json({ message: "Answers submitted successfully." });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: error.message || "An error occurred." });
