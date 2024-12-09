@@ -116,6 +116,99 @@ const getTodoUser = async (req, res) => {
     }
 };
 
+const getTodoUserSchedule = async (req, res) => {
+    try {
+        const userId = req.user.userId; // Pastikan userId diekstrak dari middleware autentikasi
+        const { date } = req.params;
+
+        if (!date) {
+            return res.status(400).json({ message: "Date parameter is required" });
+        }
+
+        // Validasi dan parsing format tanggal DD-MM-YYYY ke format ISO (YYYY-MM-DD)
+        const [day, month, year] = date.split("-");
+        if (!day || !month || !year || isNaN(Date.parse(`${year}-${month}-${day}`))) {
+            return res.status(400).json({ message: "Invalid date format. Use DD-MM-YYYY." });
+        }
+        const parsedDate = `${year}-${month}-${day}`;
+
+        const [assignments] = await AssignmentModel.getTodoUser(userId);
+        const [assessments] = await AssignmentModel.getAssessmentStatusByUser(userId);
+
+        if ((!assignments || assignments.length === 0) && (!assessments || assessments.length === 0)) {
+            return res.status(404).json({
+                message: "No to-do found for this user",
+                data: null,
+            });
+        }
+
+        // Format tanggal untuk tugas dan assessment
+        const formatTanggal = (tanggal) => {
+            if (tanggal) {
+                const tanggalObj = new Date(tanggal);
+                const [year, month, day] = tanggalObj.toISOString().split("T")[0].split("-");
+
+                // Nama bulan
+                const namaBulan = [
+                    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+                    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+                ];
+
+                return `${parseInt(day, 10)} ${namaBulan[parseInt(month, 10) - 1]} ${year}`;
+            }
+            return tanggal;
+        };
+
+        // Format dan filter data berdasarkan tanggal selesai
+        const filteredTodos = [
+            ...assignments.map((assignment) => ({
+                assignment_id: assignment.assignment_id,
+                course_id: assignment.course_id,
+                nama_course: assignment.nama_course,
+                title: assignment.title,
+                question_type: assignment.question_type,
+                tanggal_mulai: formatTanggal(assignment.tanggal_mulai),
+                tanggal_selesai: assignment.tanggal_selesai, // Tetap gunakan format ISO untuk filtering
+                category: assignment.category,
+                active: assignment.active,
+            })),
+            ...assessments.map((assessment) => ({
+                assessment_id: assessment.assessment_id,
+                nama_course: assessment.title,
+                title: assessment.category_assessment,
+                tanggal_mulai: formatTanggal(assessment.tanggal_mulai),
+                tanggal_selesai: assessment.tanggal_selesai, // Tetap gunakan format ISO untuk filtering
+                category: "assessment",
+                active: assessment.active,
+            })),
+        ].filter((todo) => {
+            const todoTanggalSelesai = new Date(todo.tanggal_selesai).toISOString().split("T")[0];
+            return todoTanggalSelesai === parsedDate; // Filter berdasarkan tanggal selesai
+        });
+
+        if (filteredTodos.length === 0) {
+            return res.status(404).json({
+                message: `No to-do found with the specified end date: ${date}`,
+            });
+        }
+
+        // Format tanggal selesai untuk output
+        const formattedTodos = filteredTodos.map((todo) => ({
+            ...todo,
+            tanggal_selesai: formatTanggal(todo.tanggal_selesai),
+        }));
+
+        return res.status(200).json(formattedTodos);
+    } catch (error) {
+        console.error("Error fetching todos:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            serverMessage: error.message,
+        });
+    }
+};
+
+
 const getAssignmentByUserCourse = async (req, res) => {
     const { courseId } = req.params;
 
@@ -356,6 +449,7 @@ const getAssignmentByAssignmentId = async (req, res) => {
 module.exports = {
     getAssignmentByUser,
     getTodoUser,
+    getTodoUserSchedule,
     getAssignmentByUserCourse,
     getAssignmentByUserCoursePreActivity,
     getAssignmentByUserCoursePostActivity,

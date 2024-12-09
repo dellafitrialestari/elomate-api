@@ -12,6 +12,8 @@ router.get("/:courseId", AssignmentController.getAssignmentByUserCourse);
 // GET - ToDo List
 router.get("/user/todo", AssignmentController.getTodoUser);
 
+router.get("/user/todoSchedule/:date", AssignmentController.getTodoUserSchedule);
+
 // GET - assignment by assignmentId
 router.get("/id/:assignmentId", AssignmentController.getAssignmentByAssignmentId);
 

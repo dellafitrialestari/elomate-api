@@ -279,6 +279,11 @@ const insertUserEssayAnswer = async (req, res) => {
         const { essay_answer } = req.body;
         const file = req.file;
 
+        // Periksa jika lebih dari satu file diunggah
+        if (req.files && req.files.length > 1) {
+            return res.status(400).json({ message: "You can only upload one file." });
+        }
+
         if (!assignmentId || !essay_answer) {
             return res.status(400).json({ message: "Missing required fields" });
         }
