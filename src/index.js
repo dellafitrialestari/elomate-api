@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 5000;
 //   "src/config/key.json"
 // );
 
-process.env.GOOGLE_APPLICATION_CREDENTIALS = "/secrets/key-json";
+// process.env.GOOGLE_APPLICATION_CREDENTIALS = "/secrets/key-file";
 
 
 const express = require("express");
