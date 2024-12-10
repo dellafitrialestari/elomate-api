@@ -97,11 +97,11 @@ const getKirkpatrickUser = async (req, res) => {
         res.status(200).json({
             peerAssessment: {
                 label: "Rekan Kerja",
-                data: removeDescription(peerScores),
+                allData: removeDescription(peerScores),
             },
             selfAssessment: {
                 label: "Self",
-                data: removeDescription(selfScores),
+                allData: removeDescription(selfScores),
             },
         });
     } catch (error) {
@@ -167,11 +167,11 @@ const getKirkpatrickUserDetail = async (req, res) => {
         res.status(200).json({
             peerAssessment: {
                 label: "Rekan Kerja",
-                data: formattedPeerScores,
+                allData: formattedPeerScores,
             },
             selfAssessment: {
                 label: "Self",
-                data: formattedSelfScores,
+                allData: formattedSelfScores,
             },
         });
     } catch (error) {
