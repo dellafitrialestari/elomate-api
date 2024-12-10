@@ -6,7 +6,8 @@ const { format } = require("util");
 const path = require("path");
 
 const storage = new Storage({
-    keyFilename: path.join(__dirname, "../config/key.json"),
+    // keyFilename: path.join(__dirname, "../config/key.json"),
+    keyFilename: "/secrets/key-json",
     projectId: "cogent-node-424708-d7",
 });
 
