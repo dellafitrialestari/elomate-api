@@ -1,5 +1,5 @@
 require("dotenv").config();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 4000;
 
 // Set path ke file key.json secara eksplisit
 // process.env.GOOGLE_APPLICATION_CREDENTIALS = path.resolve(
