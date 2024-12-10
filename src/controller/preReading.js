@@ -9,6 +9,7 @@ const getMateriByUser = async (req, res) => {
   try {
     const userId = req.user.userId; // userId dari middleware autentikasi
 
+    // Mendapatkan materi berdasarkan userId
     const [materi] = await MateriModel.getMateriByUser(userId);
 
     if (!materi || materi.length === 0) {
@@ -18,7 +19,7 @@ const getMateriByUser = async (req, res) => {
       });
     }
 
-    // materi by `materi_id`
+    // Mengelompokkan materi berdasarkan materi_id
     const groupedMateri = materi.reduce((acc, item) => {
       const { materi_id, file_name_id, bucket_name, content_type, ...rest } = item;
       if (!acc[materi_id]) {
@@ -30,7 +31,7 @@ const getMateriByUser = async (req, res) => {
       return acc;
     }, {});
 
-    // Signed URL setiap file
+    // Menambahkan Signed URL untuk setiap file
     const materiWithSignedUrl = await Promise.all(
       Object.values(groupedMateri).map(async (materi) => {
         const updatedFiles = await Promise.all(
@@ -38,20 +39,21 @@ const getMateriByUser = async (req, res) => {
             if (file.file_name_id && file.bucket_name) {
               try {
                 const storageFile = storage
-                  .bucket(file.bucket_name) // bucket_name
+                  .bucket(file.bucket_name)
                   .file(file.file_name_id);
 
+                // Memeriksa keberadaan file
                 const [exists] = await storageFile.exists();
                 if (!exists) {
                   console.error(`File not found: ${file.file_name_id}`);
                   return { ...file, signed_url: "File not found" };
                 }
 
+                // Membuat Signed URL
                 const options = {
                   version: "v4",
                   action: "read",
-                  // expires: Date.now() + 15 * 60 * 1000, // Berlaku 15 menit
-                  expires: Date.now() + 6 * 60 * 60 * 1000, // Berlaku 6 jam
+                  expires: Date.now() + 6 * 60 * 60 * 1000, // Berlaku selama 6 jam
                 };
 
                 const [signedUrl] = await storageFile.getSignedUrl(options);
