@@ -165,13 +165,13 @@ const getKirkpatrickUserDetail = async (req, res) => {
         });
 
         res.status(200).json({
-            peerAssessment: {
+            peerAssessmentDetail: {
                 label: "Rekan Kerja",
-                allData: formattedPeerScores,
+                detailKirkpatrick: formattedPeerScores,
             },
-            selfAssessment: {
+            selfAssessmentDetail: {
                 label: "Self",
-                allData: formattedSelfScores,
+                detailKirkpatrick: formattedSelfScores,
             },
         });
     } catch (error) {
