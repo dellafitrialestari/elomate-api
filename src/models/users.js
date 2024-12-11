@@ -71,6 +71,28 @@ const getEducationUser = (idUser) => {
     return dbPool.execute(SQLQuery, [idUser]);
 };
 
+const getEducationUserById = (idUser, educationId) => {
+    const SQLQuery = `
+    SELECT 
+        user_education.id_education,
+        user.user_id,
+        user.nama_lengkap,
+        user_education.jenjang_studi,
+        user_education.universitas,
+        user_education.jurusan,
+        user_education.tahun_lulus
+    FROM 
+        user_education
+    LEFT JOIN 
+        user ON user_education.user_id = user.user_id
+    WHERE 
+        user.user_id = ?
+        AND user_education.id_education = ?;
+    `;
+  
+    return dbPool.execute(SQLQuery, [idUser, educationId]);
+};
+
 const getUserByNrp = (nrpUser) => {
     const SQLQuery = `
     SELECT 
@@ -202,6 +224,7 @@ module.exports = {
     getAllUsers,
     getUserById,
     getEducationUser,
+    getEducationUserById,
     getUserByNrp,
     getUserByEmail,
     createNewUser,
