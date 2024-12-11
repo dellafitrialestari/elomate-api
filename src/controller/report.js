@@ -132,16 +132,16 @@ const getKirkpatrickUserDetail = async (req, res) => {
                             point_kirkpatrick,
                             description: description || point_kirkpatrick,
                             data_label: [],
-                            total_point: 0
+                            total_point: "0"
                         };
                     }
 
                     combined[category][point_kirkpatrick].data_label.push({
                         label: "Rekan Kerja",
-                        average_score: parseFloat(average_score)
+                        average_score: parseFloat(average_score).toString()
                     });
 
-                    combined[category][point_kirkpatrick].total_point += parseFloat(average_score);
+                    combined[category][point_kirkpatrick].total_point = (parseFloat(combined[category][point_kirkpatrick].total_point) + parseFloat(average_score)).toString();
                 });
             });
 
@@ -155,16 +155,16 @@ const getKirkpatrickUserDetail = async (req, res) => {
                             point_kirkpatrick,
                             description: description || point_kirkpatrick,
                             data_label: [],
-                            total_point: 0
+                            total_point: "0"
                         };
                     }
 
                     combined[category][point_kirkpatrick].data_label.push({
                         label: "Self",
-                        average_score: parseFloat(average_score)
+                        average_score: parseFloat(average_score).toString() 
                     });
 
-                    combined[category][point_kirkpatrick].total_point += parseFloat(average_score);
+                    combined[category][point_kirkpatrick].total_point = (parseFloat(combined[category][point_kirkpatrick].total_point) + parseFloat(average_score)).toString();
                 });
             });
 
@@ -173,7 +173,7 @@ const getKirkpatrickUserDetail = async (req, res) => {
                 const items = Object.values(combined[category]);
 
                 // Sort by total_point
-                const sortedItems = items.sort((a, b) => b.total_point - a.total_point);
+                const sortedItems = items.sort((a, b) => parseFloat(b.total_point) - parseFloat(a.total_point));
 
                 return {
                     category,
@@ -188,7 +188,7 @@ const getKirkpatrickUserDetail = async (req, res) => {
         const formattedData = combineAndCalculateScores(peerScores, selfScores);
 
         res.status(200).json({
-            kirkpatrick_detail : formattedData
+            kirkpatrick_detail: formattedData
         });
     } catch (error) {
         res.status(500).json({
