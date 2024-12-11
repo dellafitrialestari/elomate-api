@@ -15,7 +15,7 @@ const getAssessmentData = async (req, res) => {
 
         // Format tanggal tanpa mengubah zona waktu
         const formatTanggal = (tanggal) => {
-            if (tanggal) {
+            if (tanggal && tanggal !== "-") {
                 const tanggalObj = new Date(tanggal);
                 const [year, month, day] = tanggalObj.toISOString().split("T")[0].split("-");
                 const namaBulan = [
@@ -24,8 +24,8 @@ const getAssessmentData = async (req, res) => {
                 ];
                 return `${parseInt(day, 10)} ${namaBulan[parseInt(month, 10) - 1]} ${year}`;
             }
-            return tanggal;
-        };
+            return "-";
+        };        
 
         // Assessments by category
         const groupedAssessments = assessments.reduce((acc, assessment) => {
@@ -45,7 +45,7 @@ const getAssessmentData = async (req, res) => {
                 nama_user: group[0].nama_lengkap,
                 status_total: statusTotal,
                 assessments: group.map((item) => ({
-                    assessment_id : item.assessment_id,
+                    assessment_id: item.assessment_id,
                     title: item.title,
                     description: item.description,
                     tanggal_mulai: formatTanggal(item.tanggal_mulai),
@@ -133,20 +133,17 @@ const getSelfAssessment = async (req, res) => {
 
         // Format tanggal tanpa mengubah zona waktu
         const formatTanggal = (tanggal) => {
-            if (tanggal) {
+            if (tanggal && tanggal !== "-") {
                 const tanggalObj = new Date(tanggal);
                 const [year, month, day] = tanggalObj.toISOString().split("T")[0].split("-");
-                
-                // Nama bulan
                 const namaBulan = [
                     "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-                    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+                    "Juli", "Agustus", "September", "Oktober", "November", "Desember",
                 ];
-
                 return `${parseInt(day, 10)} ${namaBulan[parseInt(month, 10) - 1]} ${year}`;
             }
-            return tanggal;
-        };
+            return "-";
+        };    
 
         // Proses setiap assignment untuk format tanggal_mulai dan tanggal_selesai
         const formattedAssessments = assessment.map((assessment) => ({
@@ -184,20 +181,17 @@ const getPeerAssessment = async (req, res) => {
 
         // Format tanggal tanpa mengubah zona waktu
         const formatTanggal = (tanggal) => {
-            if (tanggal) {
+            if (tanggal && tanggal !== "-") {
                 const tanggalObj = new Date(tanggal);
                 const [year, month, day] = tanggalObj.toISOString().split("T")[0].split("-");
-                
-                // Nama bulan
                 const namaBulan = [
                     "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-                    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+                    "Juli", "Agustus", "September", "Oktober", "November", "Desember",
                 ];
-
                 return `${parseInt(day, 10)} ${namaBulan[parseInt(month, 10) - 1]} ${year}`;
             }
-            return tanggal;
-        };
+            return "-";
+        };  
 
         // format tanggal_mulai dan tanggal_selesai untuk setiap assessment
         const formattedAssessments = assessment.map((assessment) => ({
