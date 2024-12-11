@@ -147,7 +147,7 @@ const getPeerAssessmentScores = async (userId) => {
             k.category_kirkpatrick AS category,
             k.point_kirkpatrick,
             kp.description AS description,
-            COALESCE(AVG(apa.score), 0) AS average_score -- Default 0 jika NULL
+            COALESCE(AVG(apa.score), 0) AS average_score
         FROM assessment_peer_answer apa
         RIGHT JOIN kirkpatrick k 
             ON apa.question_id = k.question_id
@@ -158,27 +158,7 @@ const getPeerAssessmentScores = async (userId) => {
     `;
     const [rows] = await dbPool.execute(SQLQuery, [userId]);
 
-    // Group by category and format scores
-    const groupedData = rows.reduce((acc, row) => {
-        const { category, point_kirkpatrick, description, average_score } = row;
-
-        const formattedScore = parseFloat(Number(average_score).toFixed(2)).toString();
-
-        const categoryIndex = acc.findIndex((item) => item.category === category);
-
-        if (categoryIndex === -1) {
-            acc.push({
-                category,
-                data: [{ point_kirkpatrick, description, average_score: formattedScore }]
-            });
-        } else {
-            acc[categoryIndex].data.push({ point_kirkpatrick, description, average_score: formattedScore });
-        }
-
-        return acc;
-    }, []);
-
-    return groupedData;
+    return formatGroupedData(rows);
 };
 
 const getSelfAssessmentScores = async (userId) => {
@@ -187,7 +167,7 @@ const getSelfAssessmentScores = async (userId) => {
             k.category_kirkpatrick AS category,
             k.point_kirkpatrick,
             kp.description AS description,
-            COALESCE(AVG(asa.score), 0) AS average_score -- Default 0 jika NULL
+            COALESCE(AVG(asa.score), 0) AS average_score
         FROM assessment_self_answer asa
         RIGHT JOIN kirkpatrick k 
             ON asa.question_assessment_question_id = k.question_id
@@ -198,10 +178,12 @@ const getSelfAssessmentScores = async (userId) => {
     `;
     const [rows] = await dbPool.execute(SQLQuery, [userId]);
 
-    // Group by category and format scores
-    const groupedData = rows.reduce((acc, row) => {
-        const { category, point_kirkpatrick, description, average_score } = row;
+    return formatGroupedData(rows);
+};
 
+const formatGroupedData = (rows) => {
+    return rows.reduce((acc, row) => {
+        const { category, point_kirkpatrick, description, average_score } = row;
         const formattedScore = parseFloat(Number(average_score).toFixed(2)).toString();
 
         const categoryIndex = acc.findIndex((item) => item.category === category);
@@ -217,8 +199,6 @@ const getSelfAssessmentScores = async (userId) => {
 
         return acc;
     }, []);
-
-    return groupedData;
 };
 
 
