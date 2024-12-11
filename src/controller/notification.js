@@ -30,7 +30,7 @@ const getNotificationData = async (req, res) => {
                 data: []
             });
         }
-        
+
         // Format tanggal pada setiap notifikasi
         const formattedNotifications = notifications.map(notification => ({
             ...notification,
@@ -38,7 +38,7 @@ const getNotificationData = async (req, res) => {
         }));
 
         res.status(200).json({
-            data: formattedNotifications
+            data_notif: formattedNotifications
         });
     } catch (error) {
         res.status(500).json({
