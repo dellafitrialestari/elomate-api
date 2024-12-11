@@ -131,12 +131,12 @@ const getKirkpatrickUserDetail = async (req, res) => {
                         combined[category][point_kirkpatrick] = {
                             point_kirkpatrick,
                             description: description || point_kirkpatrick,
-                            dataLabel: [],
+                            data_label: [],
                             total_point: 0
                         };
                     }
 
-                    combined[category][point_kirkpatrick].dataLabel.push({
+                    combined[category][point_kirkpatrick].data_label.push({
                         label: "Rekan Kerja",
                         average_score: parseFloat(average_score)
                     });
@@ -154,12 +154,12 @@ const getKirkpatrickUserDetail = async (req, res) => {
                         combined[category][point_kirkpatrick] = {
                             point_kirkpatrick,
                             description: description || point_kirkpatrick,
-                            dataLabel: [],
+                            data_label: [],
                             total_point: 0
                         };
                     }
 
-                    combined[category][point_kirkpatrick].dataLabel.push({
+                    combined[category][point_kirkpatrick].data_label.push({
                         label: "Self",
                         average_score: parseFloat(average_score)
                     });
@@ -177,9 +177,9 @@ const getKirkpatrickUserDetail = async (req, res) => {
 
                 return {
                     category,
-                    dataDetail: {
-                        highestData: sortedItems.slice(0, 3),
-                        lowestData: sortedItems.slice(-3).reverse()
+                    data_detail: {
+                        highest_data: sortedItems.slice(0, 3),
+                        lowest_data: sortedItems.slice(-3).reverse()
                     }
                 };
             });
@@ -187,7 +187,9 @@ const getKirkpatrickUserDetail = async (req, res) => {
 
         const formattedData = combineAndCalculateScores(peerScores, selfScores);
 
-        res.status(200).json(formattedData);
+        res.status(200).json({
+            kirkpatrick_detail : formattedData
+        });
     } catch (error) {
         res.status(500).json({
             success: false,
