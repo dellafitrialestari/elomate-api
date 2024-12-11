@@ -29,6 +29,7 @@ const getCoursesByUserId = (userId) => {
         phase ON topik.phase_id = phase.phase_id
     WHERE 
         user.user_id = ?
+    ORDER BY course.course_id
     `;
     return dbPool.execute(SQLQuery, [userId]);
 };
@@ -98,7 +99,8 @@ const getCoursesByUserIdAndPhaseAndTopic = (userId, phase, topic) => {
     WHERE 
         user.user_id = ?
         AND topik.phase_id = ?
-        AND topik.topik_id = ?;
+        AND topik.topik_id = ?
+    ORDER BY course.course_id;
     `;
     return dbPool.execute(SQLQuery, [userId, phase, topic]);
 };
@@ -132,7 +134,8 @@ const getCoursesByUserIdCourseId = (userId, courseId) => {
         phase ON topik.phase_id = phase.phase_id
     WHERE 
         user.user_id = ?
-        AND course.course_id = ?;
+        AND course.course_id = ?
+    ORDER BY course.course_id;
     `;
     return dbPool.execute(SQLQuery, [userId, courseId]);
 };
@@ -168,7 +171,8 @@ const getCoursesByUserIdAndPhaseNameAndTopicName = (userId, phaseName, topicName
     WHERE 
         user.user_id = ?
         AND phase.nama_phase = ?
-        AND topik.nama_topik = ?;
+        AND topik.nama_topik = ?
+    ORDER BY course.course_id;
     `;
     return dbPool.execute(SQLQuery, [userId, phaseName, topicName]);
 }

@@ -5,11 +5,13 @@ const { format } = require("util");
 
 const path = require("path");
 
-const storage = new Storage({
-    // keyFilename: path.join(__dirname, "../config/key.json"),
-    keyFilename: "/secrets/key-json",
-    projectId: "cogent-node-424708-d7",
-});
+// const storage = new Storage({
+//     // keyFilename: path.join(__dirname, "../config/key.json"),
+//     keyFilename: "/secrets/key-json",
+//     projectId: "cogent-node-424708-d7",
+// });
+
+const storage = new Storage();
 
 const bucketName = "elomate-files";
 const bucket = storage.bucket(bucketName);
@@ -183,6 +185,12 @@ const insertUserAnswer = async (req, res) => {
             return res.status(400).json({ message: "Answers must be a non-empty array." });
         }
 
+        // Cek apakah user sudah memiliki jawaban untuk assignment ini
+        const existingAnswers = await QuestionsModel.findScoreUserAssignment(userId, assignmentId);
+        if (existingAnswers.length > 0) {
+            return res.status(400).json({ message: "You have already submitted answers for this assignment." });
+        }
+
         let totalQuestions = 0;
         let correctAnswers = 0;
         const detailedResults = [];
@@ -289,7 +297,7 @@ const insertUserEssayAnswer = async (req, res) => {
             return res.status(400).json({ message: "Missing required fields" });
         }
 
-        // Cek assignment_id
+        // Cek apakah assignment ID valid
         const assignmentExists = await QuestionsModel.checkAssignmentId(assignmentId);
         if (!assignmentExists || assignmentExists.length === 0) {
             return res.status(404).json({ message: `Assignment with ID ${assignmentId} does not exist.` });
@@ -298,6 +306,12 @@ const insertUserEssayAnswer = async (req, res) => {
         const questions = await QuestionsModel.findQuestionsByAssignmentId(assignmentId);
         if (!questions || questions.length === 0) {
             return res.status(404).json({ message: `No questions found for assignment ${assignmentId}.` });
+        }
+
+        // Cek apakah sudah ada jawaban yang disubmit
+        const existingAnswers = await QuestionsModel.findScoreUserAssignment(userId, assignmentId);
+        if (existingAnswers && existingAnswers.length > 0 && existingAnswers[0].active_status === "Complete") {
+            return res.status(400).json({ message: "You have already submitted answers for this assignment." });
         }
 
         const questionTypes = await Promise.all(

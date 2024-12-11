@@ -319,12 +319,18 @@ const submitSelfAssessment = async (req, res) => {
             return res.status(400).json({ message: "This assessment is not a Self Assessment." });
         }
 
-        // Validasi input
+        // Check if the user has already submitted all answers
+        const allQuestionsAnswered = await AssessmentModel.checkAllQuestionsAnswered(assessmentId, userId);
+        if (allQuestionsAnswered) {
+            return res.status(400).json({ message: "Assessment already submitted, submitting again is not allowed." });
+        }
+
+        // Validate input
         if (!Array.isArray(responses) || responses.length === 0) {
             return res.status(400).json({ message: "Responses must be a non-empty array" });
         }
 
-        // ID pertanyaan valid untuk assessment
+        // Validate question IDs for the assessment
         const questionIds = responses.map((response) => response.question_id);
         const validQuestionIds = await AssessmentModel.getValidQuestionIds(assessmentId, questionIds);
 
@@ -332,7 +338,7 @@ const submitSelfAssessment = async (req, res) => {
             return res.status(400).json({ message: "Some question IDs are invalid for this assessment" });
         }
 
-        // Mapping Likert skor numerik
+        // Map Likert scores to numeric and descriptive format
         const likertMapping = {
             1: "1 - Sangat Kurang Baik",
             2: "2 - Kurang Baik",
@@ -350,19 +356,17 @@ const submitSelfAssessment = async (req, res) => {
 
             return {
                 question_id: response.question_id,
-                answer_likert: likertMapping[numericValue], // Simpan format lengkap
-                score: numericValue, // Tetap simpan skor numerik
+                answer_likert: likertMapping[numericValue],
+                score: numericValue,
             };
         });
 
-        // Insert
+        // Insert scores into the database
         await AssessmentModel.submitSelfAssessment(userId, scores);
 
-        // semua pertanyaan sudah dijawab?
-        const allQuestionsAnswered = await AssessmentModel.checkAllQuestionsAnswered(assessmentId, userId);
-
-        // Update status assessment by validasi
-        const status = allQuestionsAnswered ? "Complete" : "Incomplete";
+        // Check again if all questions are answered
+        const updatedAllQuestionsAnswered = await AssessmentModel.checkAllQuestionsAnswered(assessmentId, userId);
+        const status = updatedAllQuestionsAnswered ? "Complete" : "Incomplete";
         await AssessmentModel.updateAssessmentEnrollmentStatus(assessmentId, userId, status);
 
         return res.status(201).json({ message: "Scores inserted successfully" });
@@ -387,6 +391,14 @@ const submitPeerAssessment = async (req, res) => {
         }
         if (assessment.category_assessment !== "Peer Assessment") {
             return res.status(400).json({ message: "This assessment is not a Peer Assessment." });
+        }
+
+        // Cek apakah sudah ada jawaban untuk kombinasi assessor dan assessed
+        const alreadyAssessed = await AssessmentModel.checkIfAssessed(assessmentId, assessorId, assessedId);
+        if (alreadyAssessed) {
+            return res.status(400).json({
+                message: "Assessment already submitted, submitting again is not allowed."
+            });
         }
 
         // Validasi question_id di assessment
