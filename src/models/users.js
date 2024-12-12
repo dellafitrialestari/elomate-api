@@ -133,9 +133,9 @@ const getUserByEmail = (emailUser) => {
 };
 
 const createNewUser = (body) => {
-    const SQLQuery = `INSERT INTO user (batch_data_batch_id, role_id, nama_lengkap, nrp, password, email, posisi, asal_universitas, jurusan, tempat_lahir, tanggal_lahir, domisili, no_hp) 
+    const SQLQuery = `INSERT INTO user (batch_data_batch_id, role_id, nama_lengkap, nrp, password, email, posisi, tempat_lahir, tanggal_lahir, domisili, no_hp) 
                       VALUES ('${body.batch_data_batch_id}', '${body.role_id}', '${body.nama_lengkap}', '${body.nrp}', 
-                      '${body.password}', '${body.email}', '${body.posisi}', '${body.asal_universitas}', '${body.jurusan}', 
+                      '${body.password}', '${body.email}', '${body.posisi}', 
                       '${body.tempat_lahir}', '${body.tanggal_lahir}', '${body.domisili}', '${body.no_hp}')`;
 
     return dbPool.execute(SQLQuery);
