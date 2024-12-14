@@ -4,7 +4,6 @@
   "main": "index.js",
   "author": "Della & Richo",
   "license": "MIT",
-
   "engines": {
     "node": "16.x"
   },

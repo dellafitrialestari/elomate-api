@@ -119,65 +119,81 @@ const getKirkpatrickUserDetail = async (req, res) => {
         const peerScores = await ReportModel.getPeerAssessmentScores(userId);
         const selfScores = await ReportModel.getSelfAssessmentScores(userId);
 
-        // 3 highest dan 3 lowest
-        const getHighestAndLowest = (data) => {
-            if (data.length <= 1) return { data }; // Tidak ada highest/lowest jika hanya satu data
+        const combineAndCalculateScores = (peer, self) => {
+            const combined = {};
 
-            const sortedData = [...data].sort((a, b) => b.average_score - a.average_score);
+            // Merge Peer Scores
+            peer.forEach(({ category, data }) => {
+                if (!combined[category]) combined[category] = {};
 
-            return {
-                highestData: sortedData.slice(0, 3),
-                lowestData: sortedData.slice(-3).reverse(),
-            };
+                data.forEach(({ point_kirkpatrick, description, average_score }) => {
+                    if (!combined[category][point_kirkpatrick]) {
+                        combined[category][point_kirkpatrick] = {
+                            point_kirkpatrick,
+                            description: description || point_kirkpatrick,
+                            data_label: [],
+                            total_point: "0"
+                        };
+                    }
+
+                    combined[category][point_kirkpatrick].data_label.push({
+                        label: "Rekan Kerja",
+                        average_score: parseFloat(average_score).toString()
+                    });
+
+                    combined[category][point_kirkpatrick].total_point = (parseFloat(combined[category][point_kirkpatrick].total_point) + parseFloat(average_score)).toString();
+                });
+            });
+
+            // Merge Self Scores
+            self.forEach(({ category, data }) => {
+                if (!combined[category]) combined[category] = {};
+
+                data.forEach(({ point_kirkpatrick, description, average_score }) => {
+                    if (!combined[category][point_kirkpatrick]) {
+                        combined[category][point_kirkpatrick] = {
+                            point_kirkpatrick,
+                            description: description || point_kirkpatrick,
+                            data_label: [],
+                            total_point: "0"
+                        };
+                    }
+
+                    combined[category][point_kirkpatrick].data_label.push({
+                        label: "Self",
+                        average_score: parseFloat(average_score).toString() 
+                    });
+
+                    combined[category][point_kirkpatrick].total_point = (parseFloat(combined[category][point_kirkpatrick].total_point) + parseFloat(average_score)).toString();
+                });
+            });
+
+            // Format Data per Category
+            return Object.keys(combined).map((category) => {
+                const items = Object.values(combined[category]);
+
+                // Sort by total_point
+                const sortedItems = items.sort((a, b) => parseFloat(b.total_point) - parseFloat(a.total_point));
+
+                return {
+                    category,
+                    data_detail: {
+                        highest_data: sortedItems.slice(0, 3),
+                        lowest_data: sortedItems.slice(-3).reverse()
+                    }
+                };
+            });
         };
 
-        // Handle description null
-        const handleNullDescription = (data) => {
-            return data.map((item) => ({
-                ...item,
-                data: item.data.map((entry) => ({
-                    ...entry,
-                    description: entry.description || entry.point_kirkpatrick,
-                })),
-            }));
-        };
-
-        // Peer Assessment
-        const formattedPeerScores = handleNullDescription(peerScores).map((item) => {
-            const { data, ...rest } = item;
-            const result = getHighestAndLowest(data);
-
-            return {
-                ...rest,
-                ...result,
-            };
-        });
-
-        // Self Assessment
-        const formattedSelfScores = handleNullDescription(selfScores).map((item) => {
-            const { data, ...rest } = item;
-            const result = getHighestAndLowest(data);
-
-            return {
-                ...rest,
-                ...result,
-            };
-        });
+        const formattedData = combineAndCalculateScores(peerScores, selfScores);
 
         res.status(200).json({
-            peerAssessmentDetail: {
-                label: "Rekan Kerja",
-                detailKirkpatrick: formattedPeerScores,
-            },
-            selfAssessmentDetail: {
-                label: "Self",
-                detailKirkpatrick: formattedSelfScores,
-            },
+            kirkpatrick_detail: formattedData
         });
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: error.message,
+            message: error.message
         });
     }
 };

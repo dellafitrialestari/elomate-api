@@ -71,6 +71,28 @@ const getEducationUser = (idUser) => {
     return dbPool.execute(SQLQuery, [idUser]);
 };
 
+const getEducationUserById = (idUser, educationId) => {
+    const SQLQuery = `
+    SELECT 
+        user_education.id_education,
+        user.user_id,
+        user.nama_lengkap,
+        user_education.jenjang_studi,
+        user_education.universitas,
+        user_education.jurusan,
+        user_education.tahun_lulus
+    FROM 
+        user_education
+    LEFT JOIN 
+        user ON user_education.user_id = user.user_id
+    WHERE 
+        user.user_id = ?
+        AND user_education.id_education = ?;
+    `;
+  
+    return dbPool.execute(SQLQuery, [idUser, educationId]);
+};
+
 const getUserByNrp = (nrpUser) => {
     const SQLQuery = `
     SELECT 
@@ -111,9 +133,9 @@ const getUserByEmail = (emailUser) => {
 };
 
 const createNewUser = (body) => {
-    const SQLQuery = `INSERT INTO user (batch_data_batch_id, role_id, nama_lengkap, nrp, password, email, posisi, asal_universitas, jurusan, tempat_lahir, tanggal_lahir, domisili, no_hp) 
+    const SQLQuery = `INSERT INTO user (batch_data_batch_id, role_id, nama_lengkap, nrp, password, email, posisi, tempat_lahir, tanggal_lahir, domisili, no_hp) 
                       VALUES ('${body.batch_data_batch_id}', '${body.role_id}', '${body.nama_lengkap}', '${body.nrp}', 
-                      '${body.password}', '${body.email}', '${body.posisi}', '${body.asal_universitas}', '${body.jurusan}', 
+                      '${body.password}', '${body.email}', '${body.posisi}', 
                       '${body.tempat_lahir}', '${body.tanggal_lahir}', '${body.domisili}', '${body.no_hp}')`;
 
     return dbPool.execute(SQLQuery);
@@ -202,6 +224,7 @@ module.exports = {
     getAllUsers,
     getUserById,
     getEducationUser,
+    getEducationUserById,
     getUserByNrp,
     getUserByEmail,
     createNewUser,

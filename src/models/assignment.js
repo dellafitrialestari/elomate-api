@@ -194,8 +194,8 @@ const getAssessmentStatusByUser = (userId) => {
     SELECT 
         a.assessment_id,
         a.title,
-        a.tanggal_mulai,
-        a.tanggal_selesai,
+        ad.tanggal_mulai,
+        ad.tanggal_selesai,
         a.category_assessment,
         COALESCE(ae.status, 'Incomplete') AS active
     FROM 
@@ -204,12 +204,21 @@ const getAssessmentStatusByUser = (userId) => {
         assessment_enrollment ae 
         ON a.assessment_id = ae.assessment_id 
         AND ae.user_user_id = ?
+    INNER JOIN 
+        user u
+        ON u.user_id = ?
+    INNER JOIN 
+        assessment_date ad
+        ON a.assessment_id = ad.assessment_id
+    INNER JOIN 
+        batch_data bd
+        ON ad.batch_id = bd.batch_id AND bd.batch_id = u.batch_data_batch_id
     WHERE 
         COALESCE(ae.status, 'Incomplete') = 'Incomplete'
     ORDER BY 
-        a.tanggal_selesai ASC;
+        ad.tanggal_selesai ASC;
     `;
-    return dbPool.execute(SQLQuery, [userId]);
+    return dbPool.execute(SQLQuery, [userId, userId]);
 };
 
 

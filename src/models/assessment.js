@@ -10,17 +10,24 @@ const getAssessmentData = async (userId) => {
         a.title,
         a.description,
         a.category_assessment,
-        a.tanggal_mulai,
-        a.tanggal_selesai,
+        COALESCE(ad.tanggal_mulai, '-') AS tanggal_mulai,
+        COALESCE(ad.tanggal_selesai, '-') AS tanggal_selesai,
         COALESCE(ae.status, 'Incomplete') AS status
     FROM 
         assessment a
     LEFT JOIN 
-        assessment_enrollment ae 
-        ON a.assessment_id = ae.assessment_id AND ae.user_user_id = ?
+        assessment_date ad 
+        ON a.assessment_id = ad.assessment_id AND ad.batch_id = (
+            SELECT batch_data_batch_id 
+            FROM user 
+            WHERE user_id = ?
+        )
     LEFT JOIN 
         user u
         ON u.user_id = ?
+    LEFT JOIN 
+        assessment_enrollment ae
+        ON a.assessment_id = ae.assessment_id AND ae.user_user_id = u.user_id
     ORDER BY 
         a.assessment_id;
     `;
@@ -48,25 +55,32 @@ const getQuestionByAssessmentId = async (assessmentId) => {
 };
 
 const getSelfAssessment = async (userId) => {
-    const SQLQuery = `
+    const SQLQuery = `        
     SELECT 
-        -- u.user_id,
-        -- u.nama_lengkap,
+        u.user_id,
+        u.nama_lengkap,
         a.assessment_id,
         a.title,
         a.description,
-        -- a.category_assessment,
-        a.tanggal_mulai,
-        a.tanggal_selesai,
+        a.category_assessment,
+        COALESCE(ad.tanggal_mulai, '-') AS tanggal_mulai,
+        COALESCE(ad.tanggal_selesai, '-') AS tanggal_selesai,
         COALESCE(ae.status, 'Incomplete') AS status
     FROM 
         assessment a
     LEFT JOIN 
-        assessment_enrollment ae 
-        ON a.assessment_id = ae.assessment_id AND ae.user_user_id = ?
+        assessment_date ad 
+        ON a.assessment_id = ad.assessment_id AND ad.batch_id = (
+            SELECT batch_data_batch_id 
+            FROM user 
+            WHERE user_id = ?
+        )
     LEFT JOIN 
         user u
         ON u.user_id = ?
+    LEFT JOIN 
+        assessment_enrollment ae
+        ON a.assessment_id = ae.assessment_id AND ae.user_user_id = u.user_id
     WHERE 
         a.category_assessment = 'Self Assessment'
     ORDER BY 
@@ -78,23 +92,30 @@ const getSelfAssessment = async (userId) => {
 const getPeerAssessment = async (userId) => {
     const SQLQuery = `
     SELECT 
-        -- u.user_id,
-        -- u.nama_lengkap,
+        u.user_id,
+        u.nama_lengkap,
         a.assessment_id,
         a.title,
         a.description,
-        -- a.category_assessment,
-        a.tanggal_mulai,
-        a.tanggal_selesai,
+        a.category_assessment,
+        COALESCE(ad.tanggal_mulai, '-') AS tanggal_mulai,
+        COALESCE(ad.tanggal_selesai, '-') AS tanggal_selesai,
         COALESCE(ae.status, 'Incomplete') AS status
     FROM 
         assessment a
     LEFT JOIN 
-        assessment_enrollment ae 
-        ON a.assessment_id = ae.assessment_id AND ae.user_user_id = ?
+        assessment_date ad 
+        ON a.assessment_id = ad.assessment_id AND ad.batch_id = (
+            SELECT batch_data_batch_id 
+            FROM user 
+            WHERE user_id = ?
+        )
     LEFT JOIN 
         user u
         ON u.user_id = ?
+    LEFT JOIN 
+        assessment_enrollment ae
+        ON a.assessment_id = ae.assessment_id AND ae.user_user_id = u.user_id
     WHERE 
         a.category_assessment = 'Peer Assessment'
     ORDER BY 

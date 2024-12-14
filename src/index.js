@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 4000;
 //   "src/config/key.json"
 // );
 
-process.env.GOOGLE_APPLICATION_CREDENTIALS = "./src/config/key.json";
+// process.env.GOOGLE_APPLICATION_CREDENTIALS = "/secrets/key-file";
 
 
 const express = require("express");
@@ -23,6 +23,7 @@ const mentoringRoutes = require("./routes/mentoring");
 const assessmentRoutes = require("./routes/assessment");
 const filesRoutes = require("./routes/files");
 const kirkpatrickRoutes = require("./routes/kirkpatrick");
+const notificationRoutes = require("./routes/notification");
 
 const middlewareLogRequest = require("./middleware/logs");
 const authenticateJWT = require("./middleware/auth");
@@ -60,6 +61,8 @@ app.use("/assessment", assessmentRoutes);
 app.use("/files", filesRoutes);
 
 app.use("/kirkpatrick", kirkpatrickRoutes);
+
+app.use("/notification", notificationRoutes);
 
 // app.post('/upload',upload.single('photo'),(req, res) => {
 //     res.json({

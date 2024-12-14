@@ -37,6 +37,8 @@ router.get("/me/education", UserController.getEducationUser);
 
 router.get("/me/education/level", UserController.getLevelEducation);
 
+router.get("/me/education/:educationId", UserController.getEducationUserById);
+
 router.patch("/me/education/:educationId", UserController.updateEducationUser);
 
 router.post("/me/education", UserController.insertEducationUser);
