@@ -22,5 +22,7 @@ router.post("/peerAssessment/:assessmentId/:assessedId", AssessmentController.su
 
 router.get("/statusPeerParticipant/:assessmentId", AssessmentController.getStatusPeerParticipant);
 
+// Fasilitator
+router.post("/question/:assessmentId", AssessmentController.postQuestionByAssessmentId); 
 
 module.exports = router; 

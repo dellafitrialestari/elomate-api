@@ -441,6 +441,11 @@ const submitPeerAssessment = async (req, res) => {
     }
 };
 
+// Fasilitator ---------------------------------------------------------------------------------
+const postQuestionByAssessmentId = async (req, res) => {
+
+}
+
 
 module.exports = {
     getAssessmentData,
@@ -450,4 +455,6 @@ module.exports = {
     getStatusPeerParticipant,
     submitSelfAssessment,
     submitPeerAssessment,
+    // Fasilitator
+    postQuestionByAssessmentId,
 };

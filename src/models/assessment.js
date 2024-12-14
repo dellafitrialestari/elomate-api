@@ -320,6 +320,17 @@ const getAssessmentTitleById = async (assessmentId) => {
     return dbPool.execute(SQLQuery, [assessmentId]);
 };
 
+// Fasilitator ----------------------------------------------------
+const postQuestionByAssessmentId = async (assessmentId) => {
+    const query = `
+    
+    `;
+    const [rows] = await dbPool.query(query, [assessmentId]);
+    if (rows.length === 0) return null;
+    return rows[0];
+};
+
+
 module.exports = {
     getAssessmentData,
     getQuestionByAssessmentId,
@@ -335,4 +346,7 @@ module.exports = {
     insertPeerScores,
     getAssessmentById,
     getAssessmentTitleById,
+
+    // Fasilitator
+    postQuestionByAssessmentId,
 };

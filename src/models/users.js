@@ -133,6 +133,11 @@ const getUserByEmail = (emailUser) => {
     return dbPool.execute(SQLQuery, [emailUser]);
 };
 
+const getUserByNRP = (nrpUser) => {
+    const SQLQuery = `SELECT * FROM user WHERE nrp = ?`;
+    return dbPool.execute(SQLQuery, [nrpUser]);
+};
+
 const createNewUser = (body) => {
     const SQLQuery = `INSERT INTO user (batch_data_batch_id, role_id, nama_lengkap, nrp, password, email, posisi, divisi, tempat_lahir, tanggal_lahir, domisili, no_hp) 
                       VALUES ('${body.batch_data_batch_id}', '${body.role_id}', '${body.nama_lengkap}', '${body.nrp}', 
@@ -226,6 +231,7 @@ module.exports = {
     getUserById,
     getEducationUser,
     getEducationUserById,
+    getUserByNRP,
     getUserByNrp,
     getUserByEmail,
     createNewUser,

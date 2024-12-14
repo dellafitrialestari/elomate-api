@@ -5,21 +5,21 @@ const { secret, expiresIn, refreshExpiresIn } = require("../config/jwt");
 const bcrypt = require("bcrypt");
 
 const loginUser = async (req, res) => {
-  const { email, password } = req.body;
+  const { nrp, password } = req.body;
 
-  if (!email || !password) {
+  if (!nrp || !password) {
     return res.status(400).json({
-      message: "Email and password are required",
+      message: "NRP and password are required",
       data: null,
     });
   }
 
   try {
-    const [userCheck] = await UsersModel.getUserByEmail(email);
+    const [userCheck] = await UsersModel.getUserByNRP(nrp);
 
     if (!userCheck || userCheck.length === 0) {
       return res.status(401).json({
-        message: "Invalid Email",
+        message: "Invalid NRP",
         data: null,
       });
     }
@@ -279,9 +279,9 @@ const getUserByEmail = async (req, res) => {
 const createNewUser = async (req, res) => {
   const { body } = req;
 
-  if (!body.email || !body.nama_lengkap || !body.domisili || !body.password) {
+  if (!body.batch_data_batch_id || !body.role_id || !body.nama_lengkap || !body.nrp || !body.password) {
     return res.status(400).json({
-      message: "Incomplete data: email, full name, domicile, and password are required.",
+      message: "Incomplete data: batch, role, full name, nrp, and password are required.",
       data: null,
     });
   }
