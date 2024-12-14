@@ -310,6 +310,9 @@ const createNewUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
   const {
+      email, 
+      posisi,
+      divisi,
       tempat_lahir,
       tanggal_lahir,
       domisili,
@@ -318,6 +321,9 @@ const updateUser = async (req, res) => {
 
   // Validasi input
   if (
+      !email ||
+      !posisi ||
+      !divisi ||
       !tempat_lahir ||
       !tanggal_lahir ||
       !domisili ||
@@ -339,6 +345,9 @@ const updateUser = async (req, res) => {
       // Panggil model untuk update data
       await UsersModel.updateUser(
           {
+              email, 
+              posisi,
+              divisi,
               tempat_lahir,
               tanggal_lahir: formattedDate,
               domisili,

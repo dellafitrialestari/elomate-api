@@ -37,7 +37,28 @@ const getParticipantData = async (userId) => {
   return dbPool.execute(SQLQuery, [userId, userId]);
 };
 
+const getParticipantEducation = (userId) => {
+  const SQLQuery = `
+  SELECT 
+      user_education.id_education,
+      user.user_id,
+      user.nama_lengkap,
+      user_education.jenjang_studi,
+      user_education.universitas,
+      user_education.jurusan,
+      user_education.tahun_lulus
+  FROM 
+      user_education
+  LEFT JOIN 
+      user ON user_education.user_id = user.user_id
+  WHERE 
+      user.user_id = ?;
+  `;
+
+  return dbPool.execute(SQLQuery, [userId]);
+};
 
 module.exports = {
     getParticipantData,
+    getParticipantEducation,
 }

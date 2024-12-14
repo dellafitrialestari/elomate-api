@@ -24,6 +24,7 @@ const getUserById = (idUser) => {
           user.nrp,
           user.email,
           user.posisi,
+          user.divisi,
           -- user.asal_universitas,
           -- user.jurusan,
           -- user.tahun_lulus,
@@ -133,9 +134,9 @@ const getUserByEmail = (emailUser) => {
 };
 
 const createNewUser = (body) => {
-    const SQLQuery = `INSERT INTO user (batch_data_batch_id, role_id, nama_lengkap, nrp, password, email, posisi, tempat_lahir, tanggal_lahir, domisili, no_hp) 
+    const SQLQuery = `INSERT INTO user (batch_data_batch_id, role_id, nama_lengkap, nrp, password, email, posisi, divisi, tempat_lahir, tanggal_lahir, domisili, no_hp) 
                       VALUES ('${body.batch_data_batch_id}', '${body.role_id}', '${body.nama_lengkap}', '${body.nrp}', 
-                      '${body.password}', '${body.email}', '${body.posisi}', 
+                      '${body.password}', '${body.email}', '${body.posisi}', '${body.divisi}',
                       '${body.tempat_lahir}', '${body.tanggal_lahir}', '${body.domisili}', '${body.no_hp}')`;
 
     return dbPool.execute(SQLQuery);
@@ -143,9 +144,9 @@ const createNewUser = (body) => {
 
 const updateUser = (body, idUser) => {
     const SQLQuery = `UPDATE user 
-                      SET tempat_lahir = ?, tanggal_lahir = ?, domisili = ?, no_hp = ?
+                      SET email = ?, posisi = ?, divisi = ?, tempat_lahir = ?, tanggal_lahir = ?, domisili = ?, no_hp = ?
                       WHERE user_id = ?`;
-    const values = [body.tempat_lahir, body.tanggal_lahir, body.domisili, body.no_hp, idUser];
+    const values = [body.email, body.posisi, body.divisi, body.tempat_lahir, body.tanggal_lahir, body.domisili, body.no_hp, idUser];
 
     return dbPool.execute(SQLQuery, values);
 }

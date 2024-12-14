@@ -113,13 +113,24 @@ const getUpcomingData = async (userId) => {
         topik t ON cr.topik_id = t.topik_id
     WHERE 
         m.user_user_id = ?
-        AND m.status = "Processing"
+        AND m.status IN ("Upcoming", "Missed")
     ORDER BY 
         m.tanggal_mentoring ASC, m.jam_mulai ASC;
     `;
 
     const [rows] = await dbPool.execute(SQLQuery, [userId]);
     return rows;
+};
+
+const updateMissedStatus = async (currentDate, userId) => {
+    const updateQuery = `
+    UPDATE mentoring
+    SET status = "Missed"
+    WHERE tanggal_mentoring < ? 
+      AND status = "Upcoming" 
+      AND user_user_id = ?;
+    `;
+    await dbPool.execute(updateQuery, [currentDate, userId]);
 };
 
 const getMentoringByStatus = async (userId, statusMentoring) => {
@@ -323,6 +334,7 @@ module.exports = {
     getMentoringById,
     getMentoringByStatus,
     getUpcomingData,
+    updateMissedStatus,
     getFeedbackData,
     getApproveData,
     getCourseIdByName,
