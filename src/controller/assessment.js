@@ -443,8 +443,55 @@ const submitPeerAssessment = async (req, res) => {
 
 // Fasilitator ---------------------------------------------------------------------------------
 const postQuestionByAssessmentId = async (req, res) => {
+    const { assessmentId } = req.params;
+    const questions = req.body; // Array of questions
 
-}
+    try {
+        // Validasi assessment_id
+        const isAssessmentValid = await AssessmentModel.getAssessmentById(assessmentId);
+        if (!isAssessmentValid) {
+            return res.status(400).json({
+                message: `Invalid assessment_id: '${assessmentId}'. Please provide a valid ID.`,
+            });
+        }
+
+        for (const { question, point_kirkpatrick, category_kirkpatrick } of questions) {
+            // Validasi point_kirkpatrick dan category_kirkpatrick
+            const isPointValid = await AssessmentModel.checkPointKirkpatrick(point_kirkpatrick);
+            const isCategoryValid = await AssessmentModel.checkCategoryKirkpatrick(category_kirkpatrick);
+
+            if (!isPointValid) {
+                return res.status(400).json({
+                    message: `Invalid point_kirkpatrick: '${point_kirkpatrick}'. Please provide a valid value.`,
+                });
+            }
+
+            if (!isCategoryValid) {
+                return res.status(400).json({
+                    message: `Invalid category_kirkpatrick: '${category_kirkpatrick}'. Please provide a valid value.`,
+                });
+            }
+
+            // Insert question and kirkpatrick
+            const result = await AssessmentModel.insertQuestionAndKirkpatrick(
+                assessmentId,
+                question,
+                point_kirkpatrick,
+                category_kirkpatrick
+            );
+
+            if (!result.success) {
+                return res.status(400).json({ message: result.message });
+            }
+        }
+
+        res.status(201).json({ message: "All data successfully inserted." });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "An error occurred while inserting data." });
+    }
+};
+
 
 
 module.exports = {
