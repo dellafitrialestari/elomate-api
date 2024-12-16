@@ -158,7 +158,11 @@ const getUpcomingData = async (req, res) => {
     try {
         const userId = req.user.userId;
 
-        // Fetch mentoring data
+        // Perbarui status mentoring berdasarkan tanggal
+        const currentDate = new Date().toISOString().split("T")[0];
+        await MentoringModel.updateMissedStatus(currentDate, userId);
+
+        // Fetch mentoring data dengan status "Upcoming" dan "Missed"
         const mentoringData = await MentoringModel.getUpcomingData(userId);
 
         if (!mentoringData || mentoringData.length === 0) {
@@ -170,7 +174,7 @@ const getUpcomingData = async (req, res) => {
             if (tanggal) {
                 const tanggalObj = new Date(tanggal);
                 const [year, month, day] = tanggalObj.toISOString().split("T")[0].split("-");
-                
+
                 // Nama bulan dalam bahasa Indonesia
                 const namaBulan = [
                     "Januari", "Februari", "Maret", "April", "Mei", "Juni",
@@ -181,7 +185,7 @@ const getUpcomingData = async (req, res) => {
             }
             return tanggal;
         };
-      
+
         const formattedData = mentoringData.map((item) => {
             return Object.fromEntries(
                 Object.entries(item).map(([key, value]) => {

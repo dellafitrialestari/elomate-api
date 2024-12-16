@@ -320,6 +320,85 @@ const getAssessmentTitleById = async (assessmentId) => {
     return dbPool.execute(SQLQuery, [assessmentId]);
 };
 
+// Fasilitator ----------------------------------------------------
+const insertQuestionAndKirkpatrick = async (assessmentId, questionText, pointKirkpatrick, categoryKirkpatrick) => {
+    const connection = await dbPool.getConnection();
+
+    try {
+        await connection.beginTransaction();
+
+        // Check if the question already exists
+        const existingQuestionQuery = `
+            SELECT qa.question_id
+            FROM question_assessment qa
+            WHERE qa.assessment_id = ? AND qa.question_text = ?;
+        `;
+        const [existingQuestionRows] = await connection.query(existingQuestionQuery, [assessmentId, questionText]);
+
+        let questionId;
+        if (existingQuestionRows.length > 0) {
+            questionId = existingQuestionRows[0].question_id;
+        } else {
+            // Insert question into question_assessment table
+            const insertQuestionQuery = `
+                INSERT INTO question_assessment (assessment_id, question_text)
+                VALUES (?, ?);
+            `;
+            const [insertQuestionResult] = await connection.query(insertQuestionQuery, [assessmentId, questionText]);
+            questionId = insertQuestionResult.insertId;
+        }
+
+        // Insert into kirkpatrick table
+        const insertKirkpatrickQuery = `
+            INSERT INTO kirkpatrick (question_id, point_kirkpatrick, category_kirkpatrick)
+            VALUES (?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+                point_kirkpatrick = VALUES(point_kirkpatrick),
+                category_kirkpatrick = VALUES(category_kirkpatrick);
+        `;
+        await connection.query(insertKirkpatrickQuery, [questionId, pointKirkpatrick, categoryKirkpatrick]);
+
+        await connection.commit();
+        return { success: true };
+    } catch (error) {
+        await connection.rollback();
+        console.error(error);
+        return { success: false, message: "Failed to insert question and kirkpatrick." };
+    } finally {
+        connection.release();
+    }
+};
+
+const checkPointKirkpatrick = async (pointKirkpatrick) => {
+    const query = `
+        SELECT 1
+        FROM kirkpatrick_points
+        WHERE point_kirkpatrick = ?
+        LIMIT 1;
+    `;
+    const [rows] = await dbPool.query(query, [pointKirkpatrick]);
+    return rows.length > 0;
+};
+
+const checkCategoryKirkpatrick = async (categoryKirkpatrick) => {
+    const query = `
+        SELECT COLUMN_TYPE 
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_NAME = 'kirkpatrick' AND COLUMN_NAME = 'category_kirkpatrick';
+    `;
+    const [rows] = await dbPool.query(query);
+
+    if (rows.length > 0) {
+        const enumValues = rows[0].COLUMN_TYPE.match(/enum\((.+)\)/i)[1]
+            .replace(/'/g, '') // Remove single quotes
+            .split(','); // Split into an array of allowed values
+        return enumValues.includes(categoryKirkpatrick);
+    }
+
+    return false;
+};
+
+
 module.exports = {
     getAssessmentData,
     getQuestionByAssessmentId,
@@ -335,4 +414,9 @@ module.exports = {
     insertPeerScores,
     getAssessmentById,
     getAssessmentTitleById,
+
+    // Fasilitator ----------------------------------------
+    insertQuestionAndKirkpatrick,
+    checkPointKirkpatrick,
+    checkCategoryKirkpatrick,
 };

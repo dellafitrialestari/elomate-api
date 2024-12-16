@@ -277,6 +277,38 @@ const updateCourseProgress = (userId, courseId, progress) => {
     return dbPool.execute(SQLQuery, [progress, userId, courseId]);
 };
 
+// Fasilitator ------------------------------------------------------------------------------------------
+const insertCourse = (batch, topik, nama_course) => {
+    const SQLQuery = `
+        INSERT INTO course (batch_data_batch_id, topik_id, nama_course)
+        VALUES (?, ?, ?);
+    `;
+    return dbPool.execute(SQLQuery, [batch, topik, nama_course]);
+};
+
+const getBatchById = (batchId) => {
+    const SQLQuery = `SELECT * FROM batch_data WHERE batch_id = ?;`;
+    return dbPool.execute(SQLQuery, [batchId]);
+};
+
+const getTopikById = (topikId) => {
+    const SQLQuery = `SELECT * FROM topik WHERE topik_id = ?;`;
+    return dbPool.execute(SQLQuery, [topikId]);
+};
+
+const updateCourseById = async (courseId, batch, topik, nama_course) => {
+    const query = `
+      UPDATE course
+      SET 
+        batch_data_batch_id = COALESCE(?, batch_data_batch_id),
+        topik_id = COALESCE(?, topik_id),
+        nama_course = COALESCE(?, nama_course)
+      WHERE course_id = ?;
+    `;
+    return db.execute(query, [batch, topik, nama_course, courseId]);
+  };
+
+  
 
 module.exports = {
     getCoursesByUserId,
@@ -293,4 +325,10 @@ module.exports = {
     getTotalAssignmentsByCourseId,
     getCompletedAssignmentsByUserIdAndCourseId,
     updateCourseProgress,
+
+    // Fasilitator --------------------------------------------------------------------------------------
+    insertCourse,
+    getBatchById,
+    getTopikById,
+    updateCourseById,
 };

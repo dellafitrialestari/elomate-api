@@ -118,6 +118,7 @@ const getKirkpatrickUserDetail = async (req, res) => {
     try {
         const peerScores = await ReportModel.getPeerAssessmentScores(userId);
         const selfScores = await ReportModel.getSelfAssessmentScores(userId);
+        const relatedQuestions = await ReportModel.getRelatedQuestions();
 
         const combineAndCalculateScores = (peer, self) => {
             const combined = {};
@@ -132,16 +133,29 @@ const getKirkpatrickUserDetail = async (req, res) => {
                             point_kirkpatrick,
                             description: description || point_kirkpatrick,
                             data_label: [],
-                            total_point: "0"
+                            total_point: "0",
                         };
                     }
 
+                    // Retrieve related questions for Peer Assessment
+                    const questions = relatedQuestions
+                        .filter(
+                            (q) =>
+                                q.point_kirkpatrick === point_kirkpatrick &&
+                                q.assessment_type === "Peer Assessment"
+                        )
+                        .map((q) => q.question_text);
+
                     combined[category][point_kirkpatrick].data_label.push({
                         label: "Rekan Kerja",
-                        average_score: parseFloat(average_score).toString()
+                        average_score: parseFloat(average_score).toString(),
+                        questions,
                     });
 
-                    combined[category][point_kirkpatrick].total_point = (parseFloat(combined[category][point_kirkpatrick].total_point) + parseFloat(average_score)).toString();
+                    combined[category][point_kirkpatrick].total_point = (
+                        parseFloat(combined[category][point_kirkpatrick].total_point) +
+                        parseFloat(average_score)
+                    ).toString();
                 });
             });
 
@@ -155,32 +169,37 @@ const getKirkpatrickUserDetail = async (req, res) => {
                             point_kirkpatrick,
                             description: description || point_kirkpatrick,
                             data_label: [],
-                            total_point: "0"
+                            total_point: "0",
                         };
                     }
 
+                    // Retrieve related questions for Self Assessment
+                    const questions = relatedQuestions
+                        .filter(
+                            (q) =>
+                                q.point_kirkpatrick === point_kirkpatrick &&
+                                q.assessment_type === "Self Assessment"
+                        )
+                        .map((q) => q.question_text);
+
                     combined[category][point_kirkpatrick].data_label.push({
                         label: "Self",
-                        average_score: parseFloat(average_score).toString() 
+                        average_score: parseFloat(average_score).toString(),
+                        questions,
                     });
 
-                    combined[category][point_kirkpatrick].total_point = (parseFloat(combined[category][point_kirkpatrick].total_point) + parseFloat(average_score)).toString();
+                    combined[category][point_kirkpatrick].total_point = (
+                        parseFloat(combined[category][point_kirkpatrick].total_point) +
+                        parseFloat(average_score)
+                    ).toString();
                 });
             });
 
-            // Format Data per Category
+            // Format data by category
             return Object.keys(combined).map((category) => {
-                const items = Object.values(combined[category]);
-
-                // Sort by total_point
-                const sortedItems = items.sort((a, b) => parseFloat(b.total_point) - parseFloat(a.total_point));
-
                 return {
                     category,
-                    data_detail: {
-                        highest_data: sortedItems.slice(0, 3),
-                        lowest_data: sortedItems.slice(-3).reverse()
-                    }
+                    data_detail: Object.values(combined[category]),
                 };
             });
         };
@@ -188,7 +207,7 @@ const getKirkpatrickUserDetail = async (req, res) => {
         const formattedData = combineAndCalculateScores(peerScores, selfScores);
 
         res.status(200).json({
-            kirkpatrick_detail: formattedData
+            kirkpatrick_detail: formattedData,
         });
     } catch (error) {
         res.status(500).json({
@@ -197,6 +216,7 @@ const getKirkpatrickUserDetail = async (req, res) => {
         });
     }
 };
+
 
 
 module.exports = {

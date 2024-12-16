@@ -31,4 +31,10 @@ router.get("/:courseId", CoursesController.getCoursesByUserIdCourseId);
 // POST - courses by Id phaseName topicName
 router.post("/name", CoursesController.getCoursesByUserIdAndPhaseNameAndTopicName);
 
+
+// Fasilitator -------------------------------------------------------------------------------------------------------
+router.post("/", CoursesController.insertCourse);
+
+router.patch("/:courseId", CoursesController.updateCourseById);
+
 module.exports = router;

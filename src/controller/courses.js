@@ -306,6 +306,72 @@ const TopicByPhaseUserId = async (req, res) => {
 };
 
 
+// Fasilitator ---------------------------------------------------------------------------------------------------------------
+const insertCourse = async (req, res) => {
+  const { batch, topik, nama_course } = req.body;
+
+  try {
+      // Validasi batch dan topik
+      const [batchResult] = await CoursesModel.getBatchById(batch);
+      const [topikResult] = await CoursesModel.getTopikById(topik);
+
+      if (batchResult.length === 0) {
+          return res.status(400).json({ message: "Batch tidak ditemukan" });
+      }
+
+      if (topikResult.length === 0) {
+          return res.status(400).json({ message: "Topik tidak ditemukan" });
+      }
+
+      // Insert
+      const [insertResult] = await CoursesModel.insertCourse(batch, topik, nama_course);
+
+      return res.status(201).json({
+          message: "Course berhasil ditambahkan",
+          courseId: insertResult.insertId,
+      });
+  } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Terjadi kesalahan pada server" });
+  }
+};
+
+const updateCourseById = async (req, res) => {
+  const { courseId } = req.params;
+  const { batch, topik, nama_course } = req.body;
+
+  try {
+    // Validasi batch dan topik
+    if (batch) {
+      const [batchResult] = await CoursesModel.getBatchById(batch);
+      if (batchResult.length === 0) {
+        return res.status(400).json({ message: "Batch tidak ditemukan" });
+      }
+    }
+
+    if (topik) {
+      const [topikResult] = await CoursesModel.getTopikById(topik);
+      if (topikResult.length === 0) {
+        return res.status(400).json({ message: "Topik tidak ditemukan" });
+      }
+    }
+
+    // Update
+    const [updateResult] = await CoursesModel.updateCourseById(courseId, batch, topik, nama_course);
+
+    if (updateResult.affectedRows === 0) {
+      return res.status(404).json({ message: "Course tidak ditemukan" });
+    }
+
+    return res.status(200).json({ message: "Course berhasil diperbarui" });
+  } catch (error) {
+    console.error("Error updating course:", error);
+    return res.status(500).json({ message: "Terjadi kesalahan pada server" });
+  }
+};
+
+
+
 module.exports = {
     getCoursesByUser,
     getCoursesProgressByUser,
@@ -317,4 +383,8 @@ module.exports = {
     getTopicByPhase,
     getTopicByPhaseUserId,
     TopicByPhaseUserId,
+
+    // Fasilitator -----------------------------
+    insertCourse,
+    updateCourseById,
 };
