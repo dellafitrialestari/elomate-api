@@ -133,7 +133,7 @@ const getKirkpatrickUserDetail = async (req, res) => {
                             point_kirkpatrick,
                             description: description || point_kirkpatrick,
                             data_label: [],
-                            total_point: 0,
+                            total_point: 0, // Initialize as a number
                         };
                     }
 
@@ -168,7 +168,7 @@ const getKirkpatrickUserDetail = async (req, res) => {
                             point_kirkpatrick,
                             description: description || point_kirkpatrick,
                             data_label: [],
-                            total_point: 0,
+                            total_point: 0, // Initialize as a number
                         };
                     }
 
@@ -195,16 +195,32 @@ const getKirkpatrickUserDetail = async (req, res) => {
 
             // Format data by category
             return Object.keys(combined).map((category) => {
+                const items = Object.values(combined[category]);
+
+                // Format total_point
+                items.forEach((item) => {
+                    const total = item.total_point;
+
+                    // Check if total is integer or float
+                    item.total_point =
+                        total % 1 === 0
+                            ? total.toFixed(0) // Remove decimal if total is an integer
+                            : total.toFixed(2); // Keep 2 significant decimals for floats
+
+                    item.total_point = item.total_point.toString(); // Convert to string
+                });
+
+                // Sort by total_point
+                const sortedItems = items.sort(
+                    (a, b) => parseFloat(b.total_point) - parseFloat(a.total_point)
+                );
+
                 return {
                     category,
-                    data_detail: Object.values(combined[category]).map((item) => ({
-                        ...item,
-                        // Format total_point: No decimal for integers, up to 2 decimals for others
-                        total_point:
-                            Number.isInteger(item.total_point)
-                                ? item.total_point.toString()
-                                : item.total_point.toFixed(2),
-                    })),
+                    data_detail: {
+                        highest_data: sortedItems.slice(0, 3), // 3 tertinggi
+                        lowest_data: sortedItems.slice(-3).reverse(), // 3 terendah
+                    },
                 };
             });
         };
