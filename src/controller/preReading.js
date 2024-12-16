@@ -21,12 +21,15 @@ const getMateriByUser = async (req, res) => {
 
     // Mengelompokkan materi berdasarkan materi_id
     const groupedMateri = materi.reduce((acc, item) => {
-      const { materi_id, file_name_id, bucket_name, content_type, ...rest } = item;
+      const { materi_id, file_name_id, bucket_name, content_type, file_path, ...rest } = item;
       if (!acc[materi_id]) {
         acc[materi_id] = { ...rest, materi_id, files: [] };
       }
       if (file_name_id) {
-        acc[materi_id].files.push({ file_name_id, bucket_name, content_type });
+        const fileLocation = file_path
+          ? `${file_path}/${file_name_id}` // Jika file dalam folder
+          : file_name_id; // Jika file tidak dalam folder
+        acc[materi_id].files.push({ file_name_id: fileLocation, bucket_name, content_type });
       }
       return acc;
     }, {});
@@ -102,12 +105,15 @@ const getMateriByUserCourse = async (req, res) => {
 
     // materi by `materi_id`
     const groupedMateri = materi.reduce((acc, item) => {
-      const { materi_id, file_name_id, bucket_name, content_type, ...rest } = item;
+      const { materi_id, file_name_id, bucket_name, content_type, file_path, ...rest } = item;
       if (!acc[materi_id]) {
         acc[materi_id] = { ...rest, materi_id, files: [] };
       }
       if (file_name_id) {
-        acc[materi_id].files.push({ file_name_id, bucket_name, content_type });
+        const fileLocation = file_path
+          ? `${file_path}/${file_name_id}` // Jika file dalam folder
+          : file_name_id; // Jika file tidak dalam folder
+        acc[materi_id].files.push({ file_name_id: fileLocation, bucket_name, content_type });
       }
       return acc;
     }, {});
@@ -163,7 +169,7 @@ const getMateriByUserCourse = async (req, res) => {
       serverMessage: error.message,
     });
   }
-};  
+};
 
 const getMateriByMateriId = async (req, res) => {
   const { materiId } = req.params;

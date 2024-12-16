@@ -133,7 +133,7 @@ const getKirkpatrickUserDetail = async (req, res) => {
                             point_kirkpatrick,
                             description: description || point_kirkpatrick,
                             data_label: [],
-                            total_point: "0",
+                            total_point: 0,
                         };
                     }
 
@@ -152,10 +152,9 @@ const getKirkpatrickUserDetail = async (req, res) => {
                         questions,
                     });
 
-                    combined[category][point_kirkpatrick].total_point = (
-                        parseFloat(combined[category][point_kirkpatrick].total_point) +
-                        parseFloat(average_score)
-                    ).toString();
+                    // Add weighted peer score (75%)
+                    combined[category][point_kirkpatrick].total_point +=
+                        parseFloat(average_score) * 0.75;
                 });
             });
 
@@ -169,7 +168,7 @@ const getKirkpatrickUserDetail = async (req, res) => {
                             point_kirkpatrick,
                             description: description || point_kirkpatrick,
                             data_label: [],
-                            total_point: "0",
+                            total_point: 0,
                         };
                     }
 
@@ -188,10 +187,9 @@ const getKirkpatrickUserDetail = async (req, res) => {
                         questions,
                     });
 
-                    combined[category][point_kirkpatrick].total_point = (
-                        parseFloat(combined[category][point_kirkpatrick].total_point) +
-                        parseFloat(average_score)
-                    ).toString();
+                    // Add weighted self score (25%)
+                    combined[category][point_kirkpatrick].total_point +=
+                        parseFloat(average_score) * 0.25;
                 });
             });
 
@@ -199,7 +197,14 @@ const getKirkpatrickUserDetail = async (req, res) => {
             return Object.keys(combined).map((category) => {
                 return {
                     category,
-                    data_detail: Object.values(combined[category]),
+                    data_detail: Object.values(combined[category]).map((item) => ({
+                        ...item,
+                        // Format total_point: No decimal for integers, up to 2 decimals for others
+                        total_point:
+                            Number.isInteger(item.total_point)
+                                ? item.total_point.toString()
+                                : item.total_point.toFixed(2),
+                    })),
                 };
             });
         };
@@ -212,7 +217,7 @@ const getKirkpatrickUserDetail = async (req, res) => {
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: error.message
+            message: error.message,
         });
     }
 };
