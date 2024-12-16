@@ -76,7 +76,8 @@ const getMateriByMateriId = (userId, materiId) => {
         b.batch_name,
         f.file_name_id,
         f.bucket_name,
-        f.content_type
+        f.content_type,
+        f.file_path
     FROM 
         materi m
     JOIN 
