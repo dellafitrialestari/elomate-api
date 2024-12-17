@@ -53,9 +53,10 @@ const getParticipantEducation = (userId) => {
       user ON user_education.user_id = user.user_id
   WHERE 
       user.user_id = ?;
+      AND user.user_id != ?;
   `;
 
-  return dbPool.execute(SQLQuery, [userId]);
+  return dbPool.execute(SQLQuery, [userId, userId]);
 };
 
 module.exports = {
