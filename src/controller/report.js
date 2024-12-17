@@ -239,52 +239,75 @@ const getKirkpatrickUserDetail = async (req, res) => {
 };
 
 const getKirkpatrickUserDetailQuestion = async (req, res) => {
-    const userId = req.user.userId; // User ID dari request
+    const userId = req.user.userId;
 
-    // Validasi userId
     if (!userId) {
         console.error('Error: userId is missing in the request');
         return res.status(400).json({ message: 'User ID is required' });
     }
 
     try {
-        // Ambil data terkait pertanyaan dan skor self-assessment
         const relatedQuestions = await ReportModel.getRelatedQuestions();
-        const selfScores = await ReportModel.getSelfAssessmentScores(userId);
+        const peerScores = await ReportModel.getPeerAssessmentScores(userId);
 
-        // Validasi hasil dari kedua query
-        if (!Array.isArray(relatedQuestions) || !Array.isArray(selfScores)) {
+        // Log data yang diambil
+        // console.log("Related Questions:", relatedQuestions);
+        // console.log("Peer Scores:", peerScores);
+
+        if (!Array.isArray(relatedQuestions) || !Array.isArray(peerScores)) {
             throw new Error('Database query did not return expected data');
         }
 
-        // Proses data untuk kategori dan skor
-        const groupedCategories = {};
-
-        relatedQuestions.forEach((question) => {
-            const { category_kirkpatrick, point_kirkpatrick, question_text, id: question_id } = question;
-
-            if (!category_kirkpatrick || !point_kirkpatrick || !question_text) {
-                console.warn('Invalid question data:', question);
-                return; // Lewati jika data tidak valid
-            }
-
-            if (!groupedCategories[category_kirkpatrick]) {
-                groupedCategories[category_kirkpatrick] = [];
-            }
-
-            // Cari skor yang sesuai berdasarkan question_id
-            const scoreObj = selfScores.find(
-                (score) => parseInt(score.question_assessment_question_id) === parseInt(question_id)
-            );
-
-            groupedCategories[category_kirkpatrick].push({
-                question: question_text,
-                point_kirkpatrick,
-                score: scoreObj ? parseFloat(scoreObj.average_score) : 0,
+        const scoreMap = {};
+        peerScores.forEach((scoreCategory) => {
+            const category = scoreCategory.category.trim(); // kategori
+            scoreCategory.data.forEach((scoreData) => {
+                const point = scoreData.point_kirkpatrick.trim(); // Poin Kirkpatrick
+                const key = `${category}-${point}`;
+                const formattedScore = parseFloat(scoreData.average_score).toFixed(2); // Format awal "4.00" atau "4.33"
+                scoreMap[key] = parseFloat(formattedScore).toString().replace(/\.0+$/, ''); // Hapus .00, tetap tampilkan satu desimal jika ada
             });
         });
 
-        // Format hasil dengan data tertinggi dan terendah
+        // Log scoreMap
+        // console.log("Score Map:", scoreMap);
+
+        const groupedCategories = {};
+
+        relatedQuestions.forEach((question) => {
+            const {
+                category_kirkpatrick,
+                point_kirkpatrick,
+                question_text
+            } = question;
+
+            if (!category_kirkpatrick || !point_kirkpatrick || !question_text) {
+                console.warn('Invalid question data:', question);
+                return;
+            }
+
+            // Bersihkan whitespace
+            const cleanedCategory = category_kirkpatrick.trim();
+            const cleanedPoint = point_kirkpatrick.trim();
+
+            // skor from scoreMap
+            const key = `${cleanedCategory}-${cleanedPoint}`;
+            const average_score = scoreMap[key] || "0";
+
+            console.log(`Mapping key: ${key}, Score Found: ${average_score}`); // Log untuk setiap skor
+
+            if (!groupedCategories[cleanedCategory]) {
+                groupedCategories[cleanedCategory] = [];
+            }
+
+            groupedCategories[cleanedCategory].push({
+                question: question_text,
+                point_kirkpatrick: cleanedPoint,
+                score: average_score,
+                // score: parseFloat(average_score),
+            });
+        });
+
         const kirkpatrickDetail = Object.entries(groupedCategories).map(([category, data]) => {
             const sortedData = [...data].sort((a, b) => b.score - a.score);
 
@@ -302,46 +325,6 @@ const getKirkpatrickUserDetailQuestion = async (req, res) => {
     }
 };
 
-
-// const processKirkpatrickDetails = (questions, selfScores) => {
-//     const groupedCategories = {};
-
-//     // Gabungkan skor self dengan pertanyaan terkait
-//     questions.forEach((question) => {
-//         const { category_kirkpatrick, point_kirkpatrick, question_text, id: question_id } = question;
-
-//         if (!category_kirkpatrick || !point_kirkpatrick || !question_text) {
-//             console.warn('Invalid question data:', question);
-//             return; // Lewati jika data tidak valid
-//         }
-
-//         if (!groupedCategories[category_kirkpatrick]) {
-//             groupedCategories[category_kirkpatrick] = [];
-//         }
-
-//         // Cari skor berdasarkan question_assessment_question_id
-//         const scoreObj = selfScores.find(
-//             (score) => score.question_assessment_question_id === question_id
-//         );
-
-//         groupedCategories[category_kirkpatrick].push({
-//             question: question_text,
-//             point_kirkpatrick,
-//             score: scoreObj && scoreObj.score ? scoreObj.score : "0",
-//         });
-//     });
-
-//     // Proses untuk menentukan highest dan lowest data
-//     return Object.entries(groupedCategories).map(([category, data]) => {
-//         const sortedData = [...data].sort((a, b) => b.score - a.score); // Urutkan berdasarkan skor
-
-//         return {
-//             category,
-//             highest_data: sortedData.slice(0, 3), // 3 tertinggi
-//             lowest_data: sortedData.slice(-3), // 3 terendah
-//         };
-//     });
-// };
 
 
 module.exports = {

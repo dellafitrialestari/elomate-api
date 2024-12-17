@@ -208,30 +208,6 @@ const getSelfAssessmentScores = async (userId) => {
     return formatGroupedData(rows);
 };
 
-const getSelfAssessmentScores2 = async (userId) => {
-    const SQLQuery = `
-        SELECT 
-            k.category_kirkpatrick AS category,
-            k.point_kirkpatrick,
-            kp.description AS description,
-            COALESCE(AVG(asa.score), 0) AS average_score
-        FROM assessment_self_answer asa
-        RIGHT JOIN kirkpatrick k 
-            ON asa.question_assessment_question_id = k.question_id
-        LEFT JOIN kirkpatrick_points kp 
-            ON k.point_kirkpatrick = kp.point_kirkpatrick
-        WHERE asa.user_user_id = ? OR asa.user_user_id IS NULL
-        GROUP BY k.category_kirkpatrick, k.point_kirkpatrick, kp.description;
-    `;
-    
-    const [rows] = await dbPool.execute(SQLQuery, [userId]);
-
-    if (!rows) return []; // Validasi hasil kosong
-    return rows; // Kembalikan hasil langsung dari database
-};
-
-
-
 const formatGroupedData = (rows) => {
     return rows.reduce((acc, row) => {
         const { category, point_kirkpatrick, description, average_score } = row;
@@ -261,5 +237,4 @@ module.exports = {
     getRelatedQuestions,
     getPeerAssessmentScores,
     getSelfAssessmentScores,
-    getSelfAssessmentScores2,
 }
