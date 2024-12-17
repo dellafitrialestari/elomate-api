@@ -3,6 +3,7 @@ const MentoringController = require("../controller/mentoring.js");
 
 const router = express.Router();
 
+router.get("/courses", MentoringController.getCoursesByUser);
 
 router.get('/mentoringData', MentoringController.getMentoringData);
 

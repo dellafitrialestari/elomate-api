@@ -4,7 +4,7 @@ const CoursesController = require("../controller/courses.js");
 const router = express.Router();
 
 // Route untuk mendapatkan courses berdasarkan user yang login
-router.get("/", CoursesController.getCoursesByUser);
+router.get("/", CoursesController.getCoursesByUser); 
 
 // Route untuk mendapatkan courses dengan progress terkecil
 router.get("/courseProgress", CoursesController.getCoursesProgressByUser);

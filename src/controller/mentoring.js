@@ -1,5 +1,36 @@
 const MentoringModel = require('../models/mentoring');
 
+const getCoursesByUser = async (req, res) => {
+    try {
+        const userId = req.user.userId; // Ensure userId is extracted via middleware authentication
+        
+        // Fetch courses based on user ID
+        const [courses] = await MentoringModel.getCoursesByUserId(userId);
+        
+        if (!courses || courses.length === 0) {
+            return res.status(404).json({
+                message: "No courses found for this user",
+                data: null,
+            });
+        }
+
+        const modifiedCourses = courses.map(course => ({
+            ...course,
+            nama_course: `${course.nama_course} - ${course.nama_topik}`, // Concatenate 'nama_course' and 'nama_topik'
+            // nama_topik: undefined, // 'nama_topik' still in response
+        }));
+
+        // Return the modified array of courses
+        return res.status(200).json(modifiedCourses);
+    } catch (error) {
+        console.error("Error fetching courses:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            serverMessage: error.message,
+        });
+    }
+};
+
 const getMentoringData = async (req, res) => {
     try {
         const userId = req.user.userId;
@@ -332,8 +363,11 @@ const postMentoring = async (req, res) => {
             return res.status(400).json({ message: "Format dari jam mulai dan jam selesai harus HH:mm" });
         }
 
-        // Fetch course_id from database using nama_course
-        const courseId = await MentoringModel.getCourseIdByName(nama_course);
+        // Extract course and topic from the combined 'nama_course'
+        const [courseName, topicName] = nama_course.split(" - "); // Assuming the format is "course - topik"
+
+        // Fetch course_id from the database using courseName
+        const courseId = await MentoringModel.getCourseIdByName(courseName);
 
         if (!courseId) {
             return res.status(404).json({ message: "Course not found" });
@@ -478,6 +512,7 @@ const deleteMentoring = async (req, res) => {
 };
 
 module.exports = {
+    getCoursesByUser,
     getMentoringData,
     getMentoringById,
     getMentoringByStatus,
