@@ -286,7 +286,7 @@ const insertUserEssayAnswer = async (req, res) => {
         const { assignmentId } = req.params;
         const userId = req.user?.userId || 1;
         const { essay_answer } = req.body;
-        const file = req.file;
+        const file = req.file; // File menjadi opsional
 
         // Periksa jika lebih dari satu file diunggah
         if (req.files && req.files.length > 1) {
@@ -309,10 +309,10 @@ const insertUserEssayAnswer = async (req, res) => {
         }
 
         // Cek apakah sudah ada jawaban yang disubmit
-        const existingAnswers = await QuestionsModel.findScoreUserAssignment(userId, assignmentId);
-        if (existingAnswers && existingAnswers.length > 0 && existingAnswers[0].active_status === "Complete") {
-            return res.status(400).json({ message: "You have already submitted answers for this assignment." });
-        }
+        // const existingAnswers = await QuestionsModel.findScoreUserAssignment(userId, assignmentId);
+        // if (existingAnswers && existingAnswers.length > 0 && existingAnswers[0].active_status === "Complete") {
+        //     return res.status(400).json({ message: "You have already submitted answers for this assignment." });
+        // }
 
         const questionTypes = await Promise.all(
             questions.map((question) =>
