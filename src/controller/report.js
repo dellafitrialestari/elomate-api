@@ -238,6 +238,110 @@ const getKirkpatrickUserDetail = async (req, res) => {
     }
 };
 
+const getKirkpatrickUserDetailQuestion = async (req, res) => {
+    const userId = req.user.userId; // User ID dari request
+
+    // Validasi userId
+    if (!userId) {
+        console.error('Error: userId is missing in the request');
+        return res.status(400).json({ message: 'User ID is required' });
+    }
+
+    try {
+        // Ambil data terkait pertanyaan dan skor self-assessment
+        const relatedQuestions = await ReportModel.getRelatedQuestions();
+        const selfScores = await ReportModel.getSelfAssessmentScores(userId);
+
+        // Validasi hasil dari kedua query
+        if (!Array.isArray(relatedQuestions) || !Array.isArray(selfScores)) {
+            throw new Error('Database query did not return expected data');
+        }
+
+        // Proses data untuk kategori dan skor
+        const groupedCategories = {};
+
+        relatedQuestions.forEach((question) => {
+            const { category_kirkpatrick, point_kirkpatrick, question_text, id: question_id } = question;
+
+            if (!category_kirkpatrick || !point_kirkpatrick || !question_text) {
+                console.warn('Invalid question data:', question);
+                return; // Lewati jika data tidak valid
+            }
+
+            if (!groupedCategories[category_kirkpatrick]) {
+                groupedCategories[category_kirkpatrick] = [];
+            }
+
+            // Cari skor yang sesuai berdasarkan question_id
+            const scoreObj = selfScores.find(
+                (score) => parseInt(score.question_assessment_question_id) === parseInt(question_id)
+            );
+
+            groupedCategories[category_kirkpatrick].push({
+                question: question_text,
+                point_kirkpatrick,
+                score: scoreObj ? parseFloat(scoreObj.average_score) : 0,
+            });
+        });
+
+        // Format hasil dengan data tertinggi dan terendah
+        const kirkpatrickDetail = Object.entries(groupedCategories).map(([category, data]) => {
+            const sortedData = [...data].sort((a, b) => b.score - a.score);
+
+            return {
+                category,
+                highest_data: sortedData.slice(0, 3), // 3 tertinggi
+                lowest_data: sortedData.slice(-3), // 3 terendah
+            };
+        });
+
+        res.json({ kirkpatrick_detail: kirkpatrickDetail });
+    } catch (error) {
+        console.error('Error fetching Kirkpatrick details:', error.message);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+};
+
+
+// const processKirkpatrickDetails = (questions, selfScores) => {
+//     const groupedCategories = {};
+
+//     // Gabungkan skor self dengan pertanyaan terkait
+//     questions.forEach((question) => {
+//         const { category_kirkpatrick, point_kirkpatrick, question_text, id: question_id } = question;
+
+//         if (!category_kirkpatrick || !point_kirkpatrick || !question_text) {
+//             console.warn('Invalid question data:', question);
+//             return; // Lewati jika data tidak valid
+//         }
+
+//         if (!groupedCategories[category_kirkpatrick]) {
+//             groupedCategories[category_kirkpatrick] = [];
+//         }
+
+//         // Cari skor berdasarkan question_assessment_question_id
+//         const scoreObj = selfScores.find(
+//             (score) => score.question_assessment_question_id === question_id
+//         );
+
+//         groupedCategories[category_kirkpatrick].push({
+//             question: question_text,
+//             point_kirkpatrick,
+//             score: scoreObj && scoreObj.score ? scoreObj.score : "0",
+//         });
+//     });
+
+//     // Proses untuk menentukan highest dan lowest data
+//     return Object.entries(groupedCategories).map(([category, data]) => {
+//         const sortedData = [...data].sort((a, b) => b.score - a.score); // Urutkan berdasarkan skor
+
+//         return {
+//             category,
+//             highest_data: sortedData.slice(0, 3), // 3 tertinggi
+//             lowest_data: sortedData.slice(-3), // 3 terendah
+//         };
+//     });
+// };
 
 
 module.exports = {
@@ -247,4 +351,5 @@ module.exports = {
     // Kirkpatrick ---------
     getKirkpatrickUser,
     getKirkpatrickUserDetail,
+    getKirkpatrickUserDetailQuestion,
 };

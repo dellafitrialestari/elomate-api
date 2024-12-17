@@ -15,5 +15,7 @@ router.get("/kirkpatrick", ReportController.getKirkpatrickUser);
 
 router.get("/kirkpatrickDetail", ReportController.getKirkpatrickUserDetail);
 
+router.get("/kirkpatrickDetailQuestion", ReportController.getKirkpatrickUserDetailQuestion);
+
 
 module.exports = router;
