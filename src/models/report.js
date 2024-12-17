@@ -168,6 +168,34 @@ const getRelatedQuestions = async () => {
     });
 };
 
+const getRelatedQuestions2 = async () => {
+    const SQLQuery = `
+    SELECT DISTINCT
+        k.category_kirkpatrick,
+        k.point_kirkpatrick,
+        q.question_text,
+        a.category_assessment AS assessment_type
+    FROM kirkpatrick k
+    LEFT JOIN question_assessment q
+        ON k.question_id = q.question_id
+    LEFT JOIN assessment a
+        ON q.assessment_id = a.assessment_id
+    WHERE q.question_text IS NOT NULL
+    AND a.category_assessment = 'Peer Assessment'
+    ORDER BY k.category_kirkpatrick, k.point_kirkpatrick;
+    `;
+
+    const [rows] = await dbPool.execute(SQLQuery);
+
+    // Fix point_kirkpatrick mapping logic
+    return rows.map(row => {
+        if (!row.point_kirkpatrick) {
+            row.point_kirkpatrick = 'Unknown';
+        }
+        return row;
+    });
+};
+
 const getPeerAssessmentScores = async (userId) => {
     const SQLQuery = `
         SELECT 
@@ -235,6 +263,7 @@ module.exports = {
 
     // Kirkpatrick ------------
     getRelatedQuestions,
+    getRelatedQuestions2,
     getPeerAssessmentScores,
     getSelfAssessmentScores,
 }

@@ -247,7 +247,7 @@ const getKirkpatrickUserDetailQuestion = async (req, res) => {
     }
 
     try {
-        const relatedQuestions = await ReportModel.getRelatedQuestions();
+        const relatedQuestions = await ReportModel.getRelatedQuestions2();
         const peerScores = await ReportModel.getPeerAssessmentScores(userId);
 
         // Log data yang diambil
@@ -294,7 +294,7 @@ const getKirkpatrickUserDetailQuestion = async (req, res) => {
             const key = `${cleanedCategory}-${cleanedPoint}`;
             const average_score = scoreMap[key] || "0";
 
-            console.log(`Mapping key: ${key}, Score Found: ${average_score}`); // Log untuk setiap skor
+            // console.log(`Mapping key: ${key}, Score Found: ${average_score}`); // Log untuk setiap skor
 
             if (!groupedCategories[cleanedCategory]) {
                 groupedCategories[cleanedCategory] = [];

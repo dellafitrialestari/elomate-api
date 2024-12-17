@@ -160,7 +160,7 @@ const getUpcomingData = async (req, res) => {
 
         // Perbarui status mentoring berdasarkan tanggal
         const currentDate = new Date().toISOString().split("T")[0];
-        await MentoringModel.updateMissedStatus(currentDate, userId);
+        await MentoringModel.updateOverdueStatus(currentDate, userId);
 
         // Fetch mentoring data dengan status "Upcoming" dan "Missed"
         const mentoringData = await MentoringModel.getUpcomingData(userId);

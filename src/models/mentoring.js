@@ -113,7 +113,7 @@ const getUpcomingData = async (userId) => {
         topik t ON cr.topik_id = t.topik_id
     WHERE 
         m.user_user_id = ?
-        AND m.status IN ("Upcoming", "Missed")
+        AND m.status IN ("Upcoming", "Overdue")
     ORDER BY 
         m.tanggal_mentoring ASC, m.jam_mulai ASC;
     `;
@@ -122,10 +122,10 @@ const getUpcomingData = async (userId) => {
     return rows;
 };
 
-const updateMissedStatus = async (currentDate, userId) => {
+const updateOverdueStatus = async (currentDate, userId) => {
     const updateQuery = `
     UPDATE mentoring
-    SET status = "Missed"
+    SET status = "Overdue"
     WHERE tanggal_mentoring < ? 
       AND status = "Upcoming" 
       AND user_user_id = ?;
@@ -291,7 +291,7 @@ const postMentoringFeedback = async (userId, mentoringId, lesson_learned_compete
         SET
             lesson_learned_competencies = ?, 
             catatan_mentor = ?,
-            status = 'Processing'
+            status = 'Need Approval'
         WHERE 
             user_user_id = ?
             AND mentoring_id = ?
@@ -334,7 +334,7 @@ module.exports = {
     getMentoringById,
     getMentoringByStatus,
     getUpcomingData,
-    updateMissedStatus,
+    updateOverdueStatus,
     getFeedbackData,
     getApproveData,
     getCourseIdByName,
