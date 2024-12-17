@@ -31,10 +31,11 @@ const getParticipantData = async (userId) => {
   SELECT batch_data_batch_id
   FROM user
   WHERE user_id = ?
-  );
-  `;
+  )
+  AND u.user_id != ?
+  ;`;
 
-  return dbPool.execute(SQLQuery, [userId, userId]);
+  return dbPool.execute(SQLQuery, [userId, userId, userId]);
 };
 
 const getParticipantEducation = (userId) => {
@@ -52,11 +53,11 @@ const getParticipantEducation = (userId) => {
   LEFT JOIN 
       user ON user_education.user_id = user.user_id
   WHERE 
-      user.user_id = ?;
-      AND user.user_id != ?;
+      user.user_id = ?
+      -- AND user.user_id != ?;
   `;
 
-  return dbPool.execute(SQLQuery, [userId, userId]);
+  return dbPool.execute(SQLQuery, [userId]);
 };
 
 module.exports = {
