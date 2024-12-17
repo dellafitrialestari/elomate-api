@@ -248,11 +248,7 @@ const getKirkpatrickUserDetailQuestion = async (req, res) => {
 
     try {
         const relatedQuestions = await ReportModel.getRelatedQuestions2();
-        const peerScores = await ReportModel.getPeerAssessmentScores(userId);
-
-        // Log data yang diambil
-        // console.log("Related Questions:", relatedQuestions);
-        // console.log("Peer Scores:", peerScores);
+        const peerScores = await ReportModel.getPeerAssessmentScores2(userId);
 
         if (!Array.isArray(relatedQuestions) || !Array.isArray(peerScores)) {
             throw new Error('Database query did not return expected data');
@@ -260,12 +256,15 @@ const getKirkpatrickUserDetailQuestion = async (req, res) => {
 
         const scoreMap = {};
         peerScores.forEach((scoreCategory) => {
-            const category = scoreCategory.category.trim(); // kategori
+            const category = scoreCategory.category.trim();
             scoreCategory.data.forEach((scoreData) => {
-                const point = scoreData.point_kirkpatrick.trim(); // Poin Kirkpatrick
+                const point = scoreData.point_kirkpatrick.trim();
                 const key = `${category}-${point}`;
-                const formattedScore = parseFloat(scoreData.average_score).toFixed(2); // Format awal "4.00" atau "4.33"
-                scoreMap[key] = parseFloat(formattedScore).toString().replace(/\.0+$/, ''); // Hapus .00, tetap tampilkan satu desimal jika ada
+                
+                // Validasi dan format skor
+                const rawScore = parseFloat(scoreData.total_score);
+                const formattedScore = isNaN(rawScore) ? "0" : rawScore.toFixed(2).replace(/\.0+$/, '');
+                scoreMap[key] = formattedScore;
             });
         });
 
@@ -273,13 +272,9 @@ const getKirkpatrickUserDetailQuestion = async (req, res) => {
         // console.log("Score Map:", scoreMap);
 
         const groupedCategories = {};
-
+        
         relatedQuestions.forEach((question) => {
-            const {
-                category_kirkpatrick,
-                point_kirkpatrick,
-                question_text
-            } = question;
+            const { category_kirkpatrick, point_kirkpatrick, question_text } = question;
 
             if (!category_kirkpatrick || !point_kirkpatrick || !question_text) {
                 console.warn('Invalid question data:', question);
@@ -313,8 +308,8 @@ const getKirkpatrickUserDetailQuestion = async (req, res) => {
 
             return {
                 category,
-                highest_data: sortedData.slice(0, 3), // 3 tertinggi
-                lowest_data: sortedData.slice(-3), // 3 terendah
+                highest_data: sortedData.slice(0, 3),
+                lowest_data: sortedData.slice(-3),
             };
         });
 

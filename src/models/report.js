@@ -216,6 +216,28 @@ const getPeerAssessmentScores = async (userId) => {
     return formatGroupedData(rows);
 };
 
+const getPeerAssessmentScores2 = async (userId) => {
+    const SQLQuery = `
+        SELECT 
+            k.category_kirkpatrick AS category,
+            k.point_kirkpatrick,
+            kp.description AS description,
+            k.question_id,
+            COALESCE(AVG(apa.score), 0) AS total_score
+        FROM kirkpatrick k
+        LEFT JOIN assessment_peer_answer apa 
+            ON apa.question_id = k.question_id
+        LEFT JOIN kirkpatrick_points kp 
+            ON k.point_kirkpatrick = kp.point_kirkpatrick
+        WHERE apa.assessed_id = ? OR apa.assessed_id IS NULL
+        GROUP BY k.category_kirkpatrick, k.point_kirkpatrick, k.question_id, kp.description;
+    `;
+
+    const [rows] = await dbPool.execute(SQLQuery, [userId]);
+
+    return formatGroupedData2(rows);
+};
+
 const getSelfAssessmentScores = async (userId) => {
     const SQLQuery = `
         SELECT 
@@ -235,6 +257,29 @@ const getSelfAssessmentScores = async (userId) => {
 
     return formatGroupedData(rows);
 };
+
+const formatGroupedData2 = (rows) => {
+    return rows.reduce((acc, row) => {
+        const { category, point_kirkpatrick, description, question_id, total_score } = row;
+
+        const rawScore = parseFloat(total_score);
+        const formattedScore = isNaN(rawScore) ? 0 : parseFloat(rawScore.toFixed(2));
+
+        const categoryIndex = acc.findIndex((item) => item.category === category);
+
+        if (categoryIndex === -1) {
+            acc.push({
+                category,
+                data: [{ question_id, point_kirkpatrick, description, total_score: formattedScore }]
+            });
+        } else {
+            acc[categoryIndex].data.push({ question_id, point_kirkpatrick, description, total_score: formattedScore });
+        }
+
+        return acc;
+    }, []);
+};
+
 
 const formatGroupedData = (rows) => {
     return rows.reduce((acc, row) => {
@@ -266,4 +311,5 @@ module.exports = {
     getRelatedQuestions2,
     getPeerAssessmentScores,
     getSelfAssessmentScores,
+    getPeerAssessmentScores2,
 }
