@@ -145,18 +145,27 @@ const getSelfAssessment = async (req, res) => {
             return "-";
         };    
 
-        // Proses setiap assignment untuk format tanggal_mulai dan tanggal_selesai
-        const formattedAssessments = assessment.map((assessment) => ({
-            ...assessment,
-            tanggal_mulai: formatTanggal(assessment.tanggal_mulai),
-            tanggal_selesai: formatTanggal(assessment.tanggal_selesai),
+        // Tentukan status berdasarkan tanggal selesai
+        // const determineStatus = (tanggalSelesai, status) => {
+        //     if (status === "Incomplete" && tanggalSelesai !== "-" && new Date(tanggalSelesai) < new Date()) {
+        //         return "Overdue";
+        //     }
+        //     return status;
+        // };
+
+        // Format data assessment dan tambahkan status
+        const formattedAssessments = assessment.map((item) => ({
+            ...item,
+            tanggal_mulai: formatTanggal(item.tanggal_mulai),
+            tanggal_selesai: formatTanggal(item.tanggal_selesai),
+            // status: determineStatus(item.tanggal_selesai, item.status),
         }));
 
 
         // Return the array directly without wrapping in an object
         return res.status(200).json(formattedAssessments);
     } catch (error) {
-        console.error("Error fetching report:", error);
+        console.error("Error fetching self-assessment:", error);
         return res.status(500).json({
             message: "Internal server error",
             serverMessage: error.message,
@@ -193,18 +202,27 @@ const getPeerAssessment = async (req, res) => {
             return "-";
         };  
 
+        // Tentukan status berdasarkan tanggal selesai
+        // const determineStatus = (tanggalSelesai, status) => {
+        //     if (status === "Incomplete" && tanggalSelesai !== "-" && new Date(tanggalSelesai) < new Date()) {
+        //         return "Overdue";
+        //     }
+        //     return status;
+        // };
+
         // format tanggal_mulai dan tanggal_selesai untuk setiap assessment
-        const formattedAssessments = assessment.map((assessment) => ({
-            ...assessment,
-            tanggal_mulai: formatTanggal(assessment.tanggal_mulai),
-            tanggal_selesai: formatTanggal(assessment.tanggal_selesai),
+        const formattedAssessments = assessment.map((item) => ({
+            ...item,
+            tanggal_mulai: formatTanggal(item.tanggal_mulai),
+            tanggal_selesai: formatTanggal(item.tanggal_selesai),
+            // status: determineStatus(item.tanggal_selesai, item.status),
         }));
 
 
         // Return the array directly without wrapping in an object
         return res.status(200).json(formattedAssessments);
     } catch (error) {
-        console.error("Error fetching report:", error);
+        console.error("Error fetching peer-assessment:", error);
         return res.status(500).json({
             message: "Internal server error",
             serverMessage: error.message,

@@ -82,6 +82,17 @@ const getTodoUser = async (req, res) => {
             return tanggal;
         };
 
+        // Cek apakah overdue atau incomplete
+        const checkStatus = (tanggalSelesai, active) => {
+            const now = new Date();
+            const selesai = new Date(tanggalSelesai);
+
+            if (active === "Incomplete" && selesai < now) {
+                return "Overdue";
+            }
+            return active;
+        };
+
         // Format data untuk response
         const formattedTodos = [
             ...assignments.map((assignment) => ({
@@ -93,7 +104,7 @@ const getTodoUser = async (req, res) => {
                 tanggal_mulai: formatTanggal(assignment.tanggal_mulai),
                 tanggal_selesai: formatTanggal(assignment.tanggal_selesai),
                 category: assignment.category,
-                active: assignment.active,
+                active: checkStatus(assignment.tanggal_selesai, assignment.active),
             })),
             ...assessments.map((assessment) => ({
                 assessment_id: assessment.assessment_id,
@@ -102,7 +113,7 @@ const getTodoUser = async (req, res) => {
                 tanggal_mulai: formatTanggal(assessment.tanggal_mulai),
                 tanggal_selesai: formatTanggal(assessment.tanggal_selesai),
                 category: "assessment",
-                active: assessment.active,
+                active: checkStatus(assessment.tanggal_selesai, assessment.active),
             })),
         ];
 
@@ -159,6 +170,17 @@ const getTodoUserSchedule = async (req, res) => {
             return tanggal;
         };
 
+        // Cek apakah overdue atau incomplete
+        const checkStatus = (tanggalSelesai, active) => {
+            const now = new Date();
+            const selesai = new Date(tanggalSelesai);
+
+            if (active === "Incomplete" && selesai < now) {
+                return "Overdue";
+            }
+            return active;
+        };
+
         // Format dan filter data berdasarkan tanggal selesai
         const filteredTodos = [
             ...assignments.map((assignment) => ({
@@ -170,7 +192,8 @@ const getTodoUserSchedule = async (req, res) => {
                 tanggal_mulai: formatTanggal(assignment.tanggal_mulai),
                 tanggal_selesai: assignment.tanggal_selesai, // Tetap gunakan format ISO untuk filtering
                 category: assignment.category,
-                active: assignment.active,
+                active: checkStatus(assignment.tanggal_selesai, assignment.active),
+                // active: assignment.active,
             })),
             ...assessments.map((assessment) => ({
                 assessment_id: assessment.assessment_id,
@@ -179,7 +202,8 @@ const getTodoUserSchedule = async (req, res) => {
                 tanggal_mulai: formatTanggal(assessment.tanggal_mulai),
                 tanggal_selesai: assessment.tanggal_selesai, // Tetap gunakan format ISO untuk filtering
                 category: "assessment",
-                active: assessment.active,
+                active: checkStatus(assessment.tanggal_selesai, assessment.active),
+                // active: assessment.active,
             })),
         ].filter((todo) => {
             const todoTanggalSelesai = new Date(todo.tanggal_selesai).toISOString().split("T")[0];
