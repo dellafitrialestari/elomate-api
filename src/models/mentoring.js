@@ -240,7 +240,7 @@ const getFeedbackData = async (userId) => {
         topik t ON cr.topik_id = t.topik_id
     WHERE 
         m.user_user_id = ?
-        AND m.status = "Need Revision"
+        AND m.status IN ("Need Revision", "Need Approval")
     ORDER BY 
         m.tanggal_mentoring ASC, m.jam_mulai ASC;
     `;

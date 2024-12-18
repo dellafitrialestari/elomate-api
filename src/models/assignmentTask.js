@@ -1,48 +1,5 @@
 const dbPool = require('../config/database');
 
-// const getQuestionsByAssignmentId = (assignmentId, userId) => {
-//     const SQLQuery = `
-//     SELECT 
-//         qa.question_id,
-//         qa.question_text,
-//         a.question_type,
-//         GROUP_CONCAT(DISTINCT mco.option_text ORDER BY mco.option_id) AS all_options,
-//         GROUP_CONCAT(DISTINCT CASE WHEN mco.is_correct = 'benar' THEN mco.option_text END) AS correct_options,
-
-//         COALESCE(
-//             CASE 
-//                 WHEN a.question_type = 'multiple_choice' THEN 
-//                     (SELECT mco.option_text 
-//                     FROM user_has_answers_assignment uha
-//                     JOIN multiple_choice_option_assignment mco 
-//                         ON uha.answer_option_id = mco.option_id
-//                     WHERE uha.user_user_id = ? 
-//                     AND mco.question_assignment_question_id = qa.question_id
-//                     LIMIT 1)
-//                 WHEN a.question_type = 'essay' THEN 
-//                     (SELECT uha.essay_answer 
-//                     FROM user_has_answers_assignment uha
-//                     WHERE uha.user_user_id = ? 
-//                     AND uha.question_id = qa.question_id
-//                     LIMIT 1)
-//             END,
-//             'Tidak ada jawaban'
-//         ) AS user_answer
-//     FROM 
-//         question_assignment qa
-//     JOIN 
-//         assignment a ON qa.assignment_id = a.assignment_id
-//     LEFT JOIN 
-//         multiple_choice_option_assignment mco ON qa.question_id = mco.question_assignment_question_id
-
-//     WHERE 
-//         qa.assignment_id = ?
-//     GROUP BY 
-//         qa.question_id, a.question_type;
-//     `;
-//     return dbPool.execute(SQLQuery, [userId, userId, assignmentId]);
-// };
-
 const getQuestionsByAssignmentId = (assignmentId, userId) => {
     const SQLQuery = `
     SELECT 
@@ -92,41 +49,6 @@ const getAnswerByQuestionsId = (userId, questionId) => {
     return dbPool.execute(SQLQuery, [userId, questionId]);
 };
 
-//     const SQLQuery = `
-//     SELECT question_type 
-//     FROM assignment 
-//     WHERE assignment_id = ? 
-//     LIMIT 1;
-//     `;
-//     return dbPool.execute(SQLQuery, [assignmentId]);
-// };
-
-// const getScore = (userId, assignmentId) => {
-//     const SQLQuery = `
-//     SELECT score 
-//     FROM score_user_assignment 
-//     WHERE user_id = ? AND assignment_id = ?;
-//     `;
-//     return dbPool.execute(SQLQuery, [userId, assignmentId]);
-// };
-
-// const updateTotalScore = (userId, assignmentId, totalScore) => {
-//     const SQLQuery = `
-//     UPDATE score_user_assignment 
-//     SET score = ? 
-//     WHERE user_id = ? AND assignment_id = ?;
-//     `;
-//     return dbPool.execute(SQLQuery, [totalScore, userId, assignmentId]);
-// };
-
-// const insertTotalScore = (userId, assignmentId, totalScore) => {
-//     const SQLQuery = `
-//     INSERT INTO score_user_assignment (user_id, assignment_id, score) 
-//     VALUES (?, ?, ?);
-//     `;
-//     return dbPool.execute(SQLQuery, [userId, assignmentId, totalScore]);
-// };
-
 const getCorrectOption = async (questionId) => {
     const query = `
         SELECT 
@@ -170,15 +92,6 @@ const findQuestionByIdAndAssignment = async (questionId, assignmentId) => {
     return results[0];
 };
 
-// const findOptionByIdAndQuestion = async (optionId, questionId) => {
-//     const query = `
-//         SELECT * FROM multiple_choice_option_assignment
-//         WHERE option_id = ? AND question_assignment_question_id = ?
-//     `;
-//     const [results] = await dbPool.query(query, [optionId, questionId]);
-//     return results[0];
-// };
-
 const findOptionIdByTextAndQuestion = async (optionText, questionId) => {
     const query = `
         SELECT option_id 
@@ -189,15 +102,66 @@ const findOptionIdByTextAndQuestion = async (optionText, questionId) => {
     return results[0]?.option_id;
 };
 
-const insertOrUpdateScore = async (data) => {
-    const query = `
-        INSERT INTO score_user_assignment (user_id, assignment_id, score, active_status)
-        VALUES (?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE
-            score = VALUES(score),
-            active_status = VALUES(active_status);
+const insertOrUpdateScoreMultiple = async ({ user_id, assignment_id, score, active_status }) => {
+    const checkQuery = `
+        SELECT * 
+        FROM score_user_assignment 
+        WHERE user_id = ? AND assignment_id = ?
     `;
-    await dbPool.query(query, [data.user_id, data.assignment_id, data.score, data.active_status]);
+    const [existingScore] = await dbPool.query(checkQuery, [user_id, assignment_id]);
+
+    if (existingScore.length > 0) {
+        // Jika data sudah ada, update skor dan tambahkan jumlah attempt
+        const updateQuery = `
+            UPDATE score_user_assignment
+            SET score = GREATEST(score, ?), 
+                attempts = attempts + 1, 
+                active_status = ?
+            WHERE user_id = ? AND assignment_id = ?
+        `;
+        await dbPool.query(updateQuery, [score, active_status, user_id, assignment_id]);
+    } else {
+        // Jika belum ada data, tambahkan skor baru
+        const insertQuery = `
+            INSERT INTO score_user_assignment (user_id, assignment_id, score, attempts, active_status)
+            VALUES (?, ?, ?, 1, ?)
+            ON DUPLICATE KEY UPDATE
+                score = VALUES(score),
+                active_status = VALUES(active_status);
+        `;
+        await dbPool.query(insertQuery, [user_id, assignment_id, score, active_status]);
+    }
+};
+
+const insertOrUpdateScore = async ({ user_id, assignment_id, score, active_status }) => {
+    const checkQuery = `
+        SELECT * 
+        FROM score_user_assignment 
+        WHERE user_id = ? AND assignment_id = ?
+    `;
+    const [existingScore] = await dbPool.query(checkQuery, [user_id, assignment_id]);
+
+    if (existingScore.length > 0) {
+        // Jika data sudah ada, update skor dan tambahkan jumlah attempt
+        const updateQuery = `
+            UPDATE score_user_assignment
+            SET score = ?, 
+                attempts = attempts + 1, 
+                active_status = ?
+            WHERE user_id = ? AND assignment_id = ?;
+        `;
+        await dbPool.query(updateQuery, [score, active_status, user_id, assignment_id]);
+    } else {
+        // Jika belum ada data, tambahkan skor baru
+        const insertQuery = `
+            INSERT INTO score_user_assignment (user_id, assignment_id, score, attempts, active_status)
+            VALUES (?, ?, ?, 1, ?)
+            ON DUPLICATE KEY UPDATE
+                score = VALUES(score),
+                active_status = VALUES(active_status);
+        `;
+        await dbPool.query(insertQuery, [user_id, assignment_id, score, active_status]);
+    }
 };
 
 const checkAssignmentId = async(assignmentId) => {
@@ -281,25 +245,6 @@ const insertAssignmentFile = async (data) => {
     return { affectedRows: 0 };
 };
 
-
-
-
-// const insertAssignmentFile = async (data) => {
-//     const query = `
-//         INSERT INTO assignment_files 
-//         (file_name_id, bucket_name, file_size, content_type, created_at, assignment_id)
-//         VALUES (?, ?, ?, ?, NOW(), ?);
-//     `;
-//     const values = [
-//         data.file_name_id,
-//         data.bucket_name,
-//         data.file_size,
-//         data.content_type,
-//         data.assignment_id
-//     ];
-//     await dbPool.query(query, values);
-// };
-
 const insertUserAnswersBulk = async (answers) => {
     const query = `
         INSERT INTO user_has_answers_assignment
@@ -341,12 +286,23 @@ const findQuestionsByAssignmentId = async (assignmentId) => {
 
 const findScoreUserAssignment = async (userId, assignmentId) => {
     const query = `
-        SELECT * 
+        SELECT COUNT(*) AS attempts 
         FROM score_user_assignment 
         WHERE user_id = ? AND assignment_id = ?;
     `;
     const [rows] = await dbPool.query(query, [userId, assignmentId]);
+    // console.log("Scores fetched for user:", rows); // Debugging
     return rows;
+};
+
+const getAttemptCount = async (userId, assignmentId) => {
+    const query = `
+        SELECT attempts 
+        FROM score_user_assignment 
+        WHERE user_id = ? AND assignment_id = ?;
+    `;
+    const [rows] = await dbPool.query(query, [userId, assignmentId]);
+    return rows.length > 0 ? rows[0].attempts : 0;
 };
 
 
@@ -357,6 +313,7 @@ module.exports = {
     insertUserAnswer,
     findQuestionByIdAndAssignment,
     findOptionIdByTextAndQuestion,
+    insertOrUpdateScoreMultiple,
     insertOrUpdateScore,
     checkAssignmentId,
     insertAssignmentFile,
@@ -364,4 +321,5 @@ module.exports = {
     insertUserAnswersBulk,
     findQuestionsByAssignmentId,
     findScoreUserAssignment,
+    getAttemptCount,
 }

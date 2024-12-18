@@ -185,12 +185,18 @@ const insertUserAnswer = async (req, res) => {
             return res.status(400).json({ message: "Answers must be a non-empty array." });
         }
 
-        // Cek apakah user sudah memiliki jawaban untuk assignment ini
-        const existingAnswers = await QuestionsModel.findScoreUserAssignment(userId, assignmentId);
-        if (existingAnswers.length > 0) {
-            return res.status(400).json({ message: "You have already submitted answers for this assignment." });
+        // Cek jumlah attempts dari database
+        const attemptCount = await QuestionsModel.getAttemptCount(userId, assignmentId);
+        console.log("Jumlah attempt yang ditemukan:", attemptCount);
+
+        // Blokir jika attempts sudah mencapai 3 atau lebih
+        if (attemptCount >= 3) {
+            return res.status(403).json({
+                message: "You have reached the maximum number of attempts. No more submissions are allowed."
+            });
         }
 
+        // Proses jawaban
         let totalQuestions = 0;
         let correctAnswers = 0;
         const detailedResults = [];
@@ -219,6 +225,7 @@ const insertUserAnswer = async (req, res) => {
 
                 // Cek benar salah
                 const isCorrect = correctOptionRows.some((opt) => opt.option_id === optionId);
+
                 if (isCorrect) {
                     correctAnswers++;
                     answerStatus = "benar";
@@ -258,17 +265,20 @@ const insertUserAnswer = async (req, res) => {
         // total skor
         const totalScore = Math.round((correctAnswers / totalQuestions) * 100);
 
-        // insert skor
-        await QuestionsModel.insertOrUpdateScore({
+        // Masukkan atau perbarui skor
+        await QuestionsModel.insertOrUpdateScoreMultiple({
             user_id: userId,
             assignment_id: assignmentId,
             score: totalScore,
             active_status: "Complete",
         });
 
-        // respon urut
+        const attemptsLeft = 3 - attemptCount - 1;
+
         return res.status(201).json({
-            message: "Answers submitted successfully.",
+            message: attemptsLeft > 0
+                ? `Answers submitted successfully. You have ${attemptsLeft} attempts remaining.`
+                : "Answers submitted successfully. You have no attempts left.",
             totalScore,
             results: detailedResults,
         });
@@ -277,6 +287,9 @@ const insertUserAnswer = async (req, res) => {
         return res.status(500).json({ message: error.message || "An error occurred." });
     }
 };
+
+
+
 
 // ------------------------------------------------------
 

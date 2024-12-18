@@ -56,6 +56,70 @@ const getCoursesProgressByUser = async (req, res) => {
   }
 };
 
+const getTopicProgressByUser = async (req, res) => {
+  try {
+      const userId = req.user.userId; // Ensure userId is extracted via middleware authentication
+
+      const [courses] = await CoursesModel.getTopicProgressByUser(userId);
+
+      if (!courses || courses.length === 0) {
+          return res.status(404).json({
+              message: "No courses found for this user",
+              data: null,
+          });
+      }
+
+      // Group courses by topik_id and calculate progress per topic
+      const topicProgress = courses.reduce((acc, course) => {
+          const {
+              topik_id,
+              nama_topik,
+              progress,
+              phase_id,
+              nama_phase,
+              mentee_name,
+              batch_name,
+          } = course;
+
+          if (!acc[topik_id]) {
+              acc[topik_id] = {
+                  topik_id,
+                  nama_topik,
+                  phase_id,
+                  nama_phase,
+                  mentee_name,
+                  batch_name,
+                  total_progress: 0,
+                  course_count: 0,
+              };
+          }
+
+          acc[topik_id].total_progress += progress;
+          acc[topik_id].course_count += 1;
+
+          return acc;
+      }, {});
+
+      const result = Object.values(topicProgress).map((topic) => ({
+          topik_id: topic.topik_id,
+          nama_topik: topic.nama_topik,
+          phase_id: topic.phase_id,
+          nama_phase: topic.nama_phase,
+          mentee_name: topic.mentee_name,
+          batch_name: topic.batch_name,
+          progress: Math.round(topic.total_progress / topic.course_count),
+      }));
+
+      return res.status(200).json(result);
+  } catch (error) {
+      console.error("Error fetching topic progress:", error);
+      return res.status(500).json({
+          message: "Internal server error",
+          serverMessage: error.message,
+      });
+  }
+};
+
 const getCoursesByUserIdAndPhaseAndTopic = async (req, res) => {
   
   const { phase, topic } = req.params;
@@ -375,6 +439,7 @@ const updateCourseById = async (req, res) => {
 module.exports = {
     getCoursesByUser,
     getCoursesProgressByUser,
+    getTopicProgressByUser,
     getCoursesByUserIdAndPhaseAndTopic,
     getCoursesByUserIdAndPhaseNameAndTopicName,
     getCoursesByUserIdCourseId,

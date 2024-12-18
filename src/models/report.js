@@ -173,6 +173,7 @@ const getRelatedQuestions2 = async () => {
     SELECT DISTINCT
         k.category_kirkpatrick,
         k.point_kirkpatrick,
+        kp.description,
         q.question_text,
         a.category_assessment AS assessment_type
     FROM kirkpatrick k
@@ -180,6 +181,8 @@ const getRelatedQuestions2 = async () => {
         ON k.question_id = q.question_id
     LEFT JOIN assessment a
         ON q.assessment_id = a.assessment_id
+    LEFT JOIN kirkpatrick_points kp
+        ON k.point_kirkpatrick = kp.point_kirkpatrick
     WHERE q.question_text IS NOT NULL
     AND a.category_assessment = 'Peer Assessment'
     ORDER BY k.category_kirkpatrick, k.point_kirkpatrick;
@@ -187,13 +190,12 @@ const getRelatedQuestions2 = async () => {
 
     const [rows] = await dbPool.execute(SQLQuery);
 
-    // Fix point_kirkpatrick mapping logic
-    return rows.map(row => {
-        if (!row.point_kirkpatrick) {
-            row.point_kirkpatrick = 'Unknown';
-        }
-        return row;
-    });
+    return rows.map(row => ({
+        category_kirkpatrick: row.category_kirkpatrick,
+        point_kirkpatrick: row.point_kirkpatrick || 'Unknown',
+        description: row.description,
+        question_text: row.question_text,
+    }));
 };
 
 const getPeerAssessmentScores = async (userId) => {

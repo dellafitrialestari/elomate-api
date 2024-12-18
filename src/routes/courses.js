@@ -9,6 +9,8 @@ router.get("/", CoursesController.getCoursesByUser);
 // Route untuk mendapatkan courses dengan progress terkecil
 router.get("/courseProgress", CoursesController.getCoursesProgressByUser);
 
+router.get("/topicProgress", CoursesController.getTopicProgressByUser);
+
 router.get("/phase", CoursesController.getPhaseCourses);
 
 // GET - phase by id user

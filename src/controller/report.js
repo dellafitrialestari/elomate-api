@@ -274,12 +274,17 @@ const getKirkpatrickUserDetailQuestion = async (req, res) => {
         const groupedCategories = {};
         
         relatedQuestions.forEach((question) => {
-            const { category_kirkpatrick, point_kirkpatrick, question_text } = question;
+            const { category_kirkpatrick, point_kirkpatrick, question_text, description } = question;
 
             if (!category_kirkpatrick || !point_kirkpatrick || !question_text) {
                 console.warn('Invalid question data:', question);
                 return;
             }
+
+            // Pilih point_kirkpatrick dari description jika ada
+            const displayedPoint = description && description.trim() !== '' 
+                ? description.trim() 
+                : point_kirkpatrick.trim();
 
             // Bersihkan whitespace
             const cleanedCategory = category_kirkpatrick.trim();
@@ -297,7 +302,7 @@ const getKirkpatrickUserDetailQuestion = async (req, res) => {
 
             groupedCategories[cleanedCategory].push({
                 question: question_text,
-                point_kirkpatrick: cleanedPoint,
+                point_kirkpatrick: displayedPoint,
                 score: average_score,
                 // score: parseFloat(average_score),
             });
