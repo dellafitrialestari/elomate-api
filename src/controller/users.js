@@ -106,10 +106,14 @@ const getCurrentUser = async (req, res) => {
       userData.tanggal_lahir = `${day}-${month}-${year}`;
     }
 
-    // Ganti nilai NULL/undefined dengan '-'
+    // Ganti nilai NULL/undefined dengan '-' atau 'Belum diisi'
     Object.keys(userData).forEach(key => {
       if (userData[key] === null || userData[key] === undefined) {
-        userData[key] = "-";
+        if (key === "tempat_lahir" || key === "tanggal_lahir") {
+          userData[key] = "-";
+        } else {
+          userData[key] = "Belum Diisi";
+        }
       }
     });
 
