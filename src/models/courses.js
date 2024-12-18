@@ -98,8 +98,8 @@ const getTopicProgressByUser = (userId) => {
         phase ON topik.phase_id = phase.phase_id
     WHERE 
         user.user_id = ?
-    ORDER BY 
-        course_enrollment.progress ASC;
+    -- ORDER BY 
+        -- course_enrollment.progress ASC;
     `;
     return dbPool.execute(SQLQuery, [userId]);
 };

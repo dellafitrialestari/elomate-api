@@ -100,15 +100,17 @@ const getTopicProgressByUser = async (req, res) => {
           return acc;
       }, {});
 
-      const result = Object.values(topicProgress).map((topic) => ({
-          topik_id: topic.topik_id,
-          nama_topik: topic.nama_topik,
-          phase_id: topic.phase_id,
-          nama_phase: topic.nama_phase,
-          mentee_name: topic.mentee_name,
-          batch_name: topic.batch_name,
-          progress: Math.round(topic.total_progress / topic.course_count),
-      }));
+      const result = Object.values(topicProgress)
+          .map((topic) => ({
+              topik_id: topic.topik_id,
+              nama_topik: topic.nama_topik,
+              phase_id: topic.phase_id,
+              nama_phase: topic.nama_phase,
+              mentee_name: topic.mentee_name,
+              batch_name: topic.batch_name,
+              progress: Math.round(topic.total_progress / topic.course_count),
+          }))
+          .sort((a, b) => b.progress - a.progress); // Sort by progress descending
 
       return res.status(200).json(result);
   } catch (error) {

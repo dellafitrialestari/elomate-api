@@ -279,6 +279,7 @@ const insertUserAnswer = async (req, res) => {
             message: attemptsLeft > 0
                 ? `Answers submitted successfully. You have ${attemptsLeft} attempts remaining.`
                 : "Answers submitted successfully. You have no attempts left.",
+            attempt: attemptsLeft,
             totalScore,
             results: detailedResults,
         });

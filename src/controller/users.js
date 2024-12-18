@@ -106,6 +106,13 @@ const getCurrentUser = async (req, res) => {
       userData.tanggal_lahir = `${day}-${month}-${year}`;
     }
 
+    // Ganti nilai NULL/undefined dengan '-'
+    Object.keys(userData).forEach(key => {
+      if (userData[key] === null || userData[key] === undefined) {
+        userData[key] = "-";
+      }
+    });
+
     // Kembalikan data pengguna dengan format tanggal yang diubah
     return res.status(200).json(userData);
     
@@ -279,9 +286,10 @@ const getUserByEmail = async (req, res) => {
 const createNewUser = async (req, res) => {
   const { body } = req;
 
+  // Check for required fields
   if (!body.batch_data_batch_id || !body.role_id || !body.nama_lengkap || !body.nrp || !body.password) {
     return res.status(400).json({
-      message: "Incomplete data: batch, role, full name, nrp, and password are required.",
+      message: "Incomplete data: batch_data_batch_id, role_id, nama_lengkap, nrp, and password are required.",
       data: null,
     });
   }
@@ -289,21 +297,37 @@ const createNewUser = async (req, res) => {
   try {
     // Hash the password before saving it to the database
     const hashedPassword = await bcrypt.hash(body.password, 10);
-    const newUser = { ...body, password: hashedPassword };
+
+    // Prepare the new user object with required fields
+    const newUser = {
+      batch_data_batch_id: body.batch_data_batch_id,
+      role_id: body.role_id,
+      nama_lengkap: body.nama_lengkap,
+      nrp: body.nrp,
+      password: hashedPassword,
+      email: body.email || null,
+      posisi: body.posisi || null,
+      divisi: body.divisi || null,
+      tempat_lahir: body.tempat_lahir || null,
+      tanggal_lahir: body.tanggal_lahir || null,
+      domisili: body.domisili || null,
+      no_hp: body.no_hp || null,
+    };
 
     await UsersModel.createNewUser(newUser);
+
     res.status(201).json({
       message: "CREATE new user success",
       data: {
-        email: body.email,
+        email: body.email || null,
         nama_lengkap: body.nama_lengkap,
-        domisili: body.domisili,
+        domisili: body.domisili || null,
       },
     });
   } catch (error) {
     res.status(500).json({
       message: "Server Error",
-      serverMessage: error,
+      serverMessage: error.message,
     });
   }
 };

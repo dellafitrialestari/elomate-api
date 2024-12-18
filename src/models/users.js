@@ -139,13 +139,41 @@ const getUserByNRP = (nrpUser) => {
 };
 
 const createNewUser = (body) => {
-    const SQLQuery = `INSERT INTO user (batch_data_batch_id, role_id, nama_lengkap, nrp, password, email, posisi, divisi, tempat_lahir, tanggal_lahir, domisili, no_hp) 
-                      VALUES ('${body.batch_data_batch_id}', '${body.role_id}', '${body.nama_lengkap}', '${body.nrp}', 
-                      '${body.password}', '${body.email}', '${body.posisi}', '${body.divisi}',
-                      '${body.tempat_lahir}', '${body.tanggal_lahir}', '${body.domisili}', '${body.no_hp}')`;
-
-    return dbPool.execute(SQLQuery);
-}
+    const SQLQuery = `
+      INSERT INTO user (
+        batch_data_batch_id, 
+        role_id, 
+        nama_lengkap, 
+        nrp, 
+        password, 
+        email, 
+        posisi, 
+        divisi, 
+        tempat_lahir, 
+        tanggal_lahir, 
+        domisili, 
+        no_hp
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+  
+    // Use NULL for optional field
+    const values = [
+      body.batch_data_batch_id,
+      body.role_id,
+      body.nama_lengkap,
+      body.nrp,
+      body.password,
+      body.email || null,
+      body.posisi || null,
+      body.divisi || null,
+      body.tempat_lahir || null,
+      body.tanggal_lahir || null,
+      body.domisili || null,
+      body.no_hp || null,
+    ];
+  
+    return dbPool.execute(SQLQuery, values);
+  };  
 
 const updateUser = (body, idUser) => {
     const SQLQuery = `UPDATE user 
